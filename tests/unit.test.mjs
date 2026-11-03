@@ -122,7 +122,7 @@ describe('transcript', () => {
   test('without model timestamps a line carries the segment start, marked approximate', () => {
     const [l] = linesFromResult(seg(), { text: 'hello', segments: null, cost: null, generationId: null }, 'm1');
     assert.equal(l.timing, 'segment-start'); assert.equal(l.startMs, 10000);
-    assert.match(toText({ title: 'T', startedAt: 'x', model: 'm' }, assemble([seg()], [{ ...l }])), /\[≈00:00:10\] Meeting: hello/);
+    assert.match(toText({ title: 'T', startedAt: 'x', model: 'm' }, assemble([seg()], [{ ...l }])), /\[≈00:00:10\] hello/);
   });
   test('labels come from the channel only: You for the microphone, Meeting for the tab', () => {
     const items = assemble([seg(), seg({ id: 's2', channel: 'mic' })], [
@@ -225,5 +225,16 @@ describe('v0.3.1 review fixes, pure parts', () => {
   test('13: a request gives up before its lease could expire', async () => {
     const { REQUEST_TIMEOUT_MS } = await import('../extension/lib/openrouter.js');
     assert.ok(REQUEST_TIMEOUT_MS < 180000 - 30000, 'the 180 s lease outlives the request with margin');
+  });
+});
+
+describe('labels after the first real call', () => {
+  const seg = (o) => ({ id: 's1', meetingId: 'm', channel: 'tab', startMs: 0, endMs: 3000, status: 'done', ...o });
+  test('only your microphone is labelled in exports; the call is not; the debrief input keeps both', () => {
+    const items = assemble([], [...linesFromResult(seg(), { text: 'from the call', segments: null }, 'm'),
+                                 ...linesFromResult(seg({ id: 's2', channel: 'mic', startMs: 5000 }), { text: 'from me', segments: null }, 'm')]);
+    const t = toText({ title: 'T', startedAt: 'x', model: 'm' }, items);
+    assert.match(t, /\] from the call/); assert.match(t, /\] You: from me/); assert.doesNotMatch(t, /Meeting:/);
+    assert.match(transcriptForPrompt(items), /Meeting: from the call[\s\S]*You: from me/);
   });
 });

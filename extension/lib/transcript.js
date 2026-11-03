@@ -78,10 +78,14 @@ export function clock(ms) {
 const stamp = (i) => (i.timing === 'model' ? '' : '≈') + clock(i.startMs);
 const gapText = (g) => `[${g.status}${g.lastError ? ': ' + g.lastError : ''}]`;
 const flagText = (i) => i.flags && i.flags.length ? ` (${i.flags.join(', ')})` : '';
+// On screen and in exports only the microphone is labelled: every other line is the call, so "Meeting:" on each
+// one is noise (the editor, after the first real call). The debrief's input keeps both labels (debrief.js).
+export const shownLabel = (i) => (i.channel === 'mic' ? i.label : null);
+const who = (i) => (shownLabel(i) ? shownLabel(i) + ': ' : '');
 
 export function toText(meeting, items) {
   const head = [meeting.title, `Started: ${meeting.startedAt}`, meeting.endedAt ? `Ended: ${meeting.endedAt}` : null, `Model: ${meeting.model}`, ''].filter(x => x !== null);
-  const body = items.map(i => i.type === 'line' ? `[${stamp(i)}] ${i.label}: ${i.text}${flagText(i)}` : `[${stamp(i)}] ${i.label}: ${gapText(i)}`);
+  const body = items.map(i => i.type === 'line' ? `[${stamp(i)}] ${who(i)}${i.text}${flagText(i)}` : `[${stamp(i)}] ${who(i)}${gapText(i)}`);
   return head.concat(body).join('\n') + '\n';
 }
 
@@ -92,7 +96,7 @@ export function toMarkdown(meeting, items, cost) {
   if (cost) md.push(`- Cost reported by OpenRouter: $${cost.usd.toFixed(4)} over ${cost.requests} requests` + (cost.unknown ? ` (${cost.unknown} did not report a cost)` : ''));
   if (meeting.debrief) md.push('', '## Debrief', '', `*Written by \`${meeting.debrief.model}\` on ${meeting.debrief.generatedAt}. A model's reading of the transcript below.*`, '', meeting.debrief.markdown.replace(/^## /gm, '### '));
   md.push('', '## Transcript', '', '*Written by a model, not a stenographer. It can mishear, and it can add words nobody said. Check anything that matters against the audio.*', '');
-  for (const i of items) md.push(i.type === 'line' ? `**[${stamp(i)}] ${i.label}:** ${i.text}${flagText(i)}  ` : `*[${stamp(i)}] ${i.label}: ${gapText(i)}*  `);
+  for (const i of items) md.push(i.type === 'line' ? `**[${stamp(i)}]${shownLabel(i) ? ' ' + shownLabel(i) + ':' : ''}** ${i.text}${flagText(i)}  ` : `*[${stamp(i)}] ${who(i)}${gapText(i)}*  `);
   return md.join('\n') + '\n';
 }
 

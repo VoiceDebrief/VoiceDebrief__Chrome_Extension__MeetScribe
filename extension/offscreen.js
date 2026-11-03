@@ -122,7 +122,9 @@ async function begin({ streamId, meetingId, mic, micDeviceId, outputDeviceId }) 
       S.channels.mic = channel('mic', m, Math.round(S.capture.currentTime * SAMPLE_RATE));
       m.getAudioTracks()[0]?.addEventListener('ended', () => toSw({ type: 'mic-error', error: 'the microphone was disconnected' }));
     } catch (e) {
-      micError = e.name === 'NotAllowedError' ? 'microphone not allowed: grant it on the options page' : 'microphone: ' + e.message;
+      micError = e.name === 'NotAllowedError' ? 'Chrome did not allow the microphone (press Allow the microphone on the options page first)'
+        : e.name === 'NotFoundError' || e.name === 'OverconstrainedError' ? 'the chosen microphone was not found (pick one on the options page)'
+        : `the microphone could not start (${e.name}: ${e.message})`;
       await db.updateMeeting(meetingId, { channels: ['tab'], micError });
     }
   }

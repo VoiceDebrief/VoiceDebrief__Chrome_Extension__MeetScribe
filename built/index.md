@@ -1,4 +1,4 @@
-# What is built in v0.3.2
+# What is built in v0.3.3
 
 The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the reality file: if something is not listed here as built, it does not exist yet, whatever [brief v2.0](../brief/index.md) says.
 
@@ -14,7 +14,7 @@ The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the
 | 4.4 | Cuts at pauses: energy against an adaptive floor, 8 s minimum, 600 ms pause, 2 s idle close, 30 s forced cut, silence dropped | `lib/vad.js` | [[built]] 8 unit tests on audio with a known shape |
 | 4.5 | Each segment is checked by its bytes before sending; one that fails is kept as `invalid`, never sent | `lib/wav.js`, `lib/queue.js` | [[built]] unit and Chromium |
 | 5.1 to 5.4 | The request (`verbose_json`, `provider.zdr`), fallback to `json` remembered per model, the errors table, backoff with jitter and `Retry-After`, the key check on a network-shaped error, leases | `lib/openrouter.js`, `lib/queue.js`, `lib/db.js` | [[built]] A4 (no double send under two drains), A7, retry, fallback |
-| 6 | Lines from model output kept as returned; gaps shown; **You** and **Meeting** by channel; `probable-echo` and `suspect` flags; `≈` for times that are a segment's start | `lib/transcript.js` | [[built]] |
+| 6 | Lines from model output kept as returned; gaps shown; **You** for the microphone, no label for the call (v0.3.3: "Meeting" on every line was noise), both labels kept in the debrief's input; `probable-echo` and `suspect` flags; `≈` for times that are a segment's start | `lib/transcript.js` | [[built]] |
 | 8 | IndexedDB without a library: meetings, segments, audio apart, lines; `unlimitedStorage`; retention of transcribed audio; delete a meeting; delete all | `lib/db.js` | [[built]] A12 |
 | 9 | The manifest exactly as specified; the validator refuses any other | `manifest.json`, `admin/build/validate.mjs` | [[built]] |
 | 10 | Side panel, options (key test, microphone grant, devices, live model list, retention, provenance), meetings page (play the audio a line came from, retry, export TXT, Markdown, JSON, delete) | `sidepanel.*`, `options.*`, `meetings.*` | [[built]] pages load without errors |

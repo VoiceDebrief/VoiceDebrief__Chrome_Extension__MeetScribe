@@ -1,8 +1,8 @@
 # VoiceDebrief MeetScribe
 
-> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. A VoiceDebrief product (https://voicedebrief.ai): its transcript and debrief, for a meeting. Status on 3 November 2026: v0.3.2, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
+> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. A VoiceDebrief product (https://voicedebrief.ai): its transcript and debrief, for a meeting. Status on 3 November 2026: v0.3.3, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
 
-Site and extension v0.3.2 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. The site is https://meetscribe.chrome-extension.voicedebrief.ai/ (from the CNAME file); the older address voicedebrief.github.io/VoiceDebrief__Chrome_Extension__MeetScribe/ redirects here.
+Site and extension v0.3.3 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. The site is https://meetscribe.chrome-extension.voicedebrief.ai/ (from the CNAME file); the older address voicedebrief.github.io/VoiceDebrief__Chrome_Extension__MeetScribe/ redirects here.
 
 ## Privacy, stated plainly
 
@@ -10,7 +10,7 @@ Site and extension v0.3.2 (one version, admin/build/version.txt; every push to d
 
 ## Read first
 
-- [Reviews and findings](https://meetscribe.chrome-extension.voicedebrief.ai/reviews/index.md): the v0.3.1 code review (18 findings, as received, PDF) with each finding's status and test, and the first real call (S1: the icon click must be handled by the extension for Chrome to allow tab capture; fixed in v0.3.2).
+- [Reviews and findings](https://meetscribe.chrome-extension.voicedebrief.ai/reviews/index.md): the v0.3.1 code review (18 findings, as received, PDF) with each finding's status and test, and the first real call (S1: the icon click must be handled by the extension for Chrome to allow tab capture; fixed in v0.3.2 and confirmed on the next real call; S2, the microphone in the capture page, under test).
 
 - [Download the extension, latest](https://meetscribe.chrome-extension.voicedebrief.ai/releases/meetscribe-latest.zip): one folder, meetscribe/, to load unpacked at chrome://extensions with Developer mode on. Versioned copies: releases/meetscribe-vX.Y.Z.zip, each with a .sha256; the zip is byte for byte the repository's extension/ folder (the gate checks it).
 - [Report a test](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md): a GitHub issue form with the eight spike questions.
@@ -42,3 +42,4 @@ Site and extension v0.3.2 (one version, admin/build/version.txt; every push to d
 - Code: extension/lib/{wav,vad,openrouter,queue,transcript,db,settings}.js are plain ES modules with no chrome.* except db (IndexedDB) and settings; tests/unit.test.mjs runs them in Node. tests/extension.test.mjs loads a TEST build in Chromium with a fake audio device and tests/helpers/replay.mjs as OpenRouter.
 - An offscreen document has chrome.runtime only: it reads settings through the service worker (found while building; see built/index.md).
 - The debrief: extension/lib/prompts.js (VoiceDebrief's summary-prompt.md made for a meeting, with its LOCALES), lib/debrief.js; POST /api/v1/chat/completions; stored on the meeting as debrief {markdown, model, locale, generatedAt, costUsd}; the transcript is never changed.
+- Labels: on screen and in exports only microphone lines are labelled ("You"); lines from the call carry no label. The debrief model's input keeps both labels ("Meeting", "You").

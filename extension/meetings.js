@@ -93,11 +93,12 @@ async function render() {
   $('meta').replaceChildren(...rows.flatMap(([k, v]) => [el('span', 'k', k), el('span', null, v)]));
   $('lines').replaceChildren(...items.map(i => {
     const li = el('li', i.type === 'gap' ? 'gap' : (i.flags.length ? 'dimmed' : ''));
-    li.append(el('span', 't', (i.timing === 'model' ? '' : '≈') + clock(i.startMs)), el('span', 'who ' + i.channel, i.label + ':'));
+    li.append(el('span', 't', (i.timing === 'model' ? '' : '≈') + clock(i.startMs)));
+    if (i.channel === 'mic') li.append(el('span', 'who mic', i.label + ':'));   // only You is labelled
     if (i.type === 'line') { li.append(document.createTextNode(i.text)); for (const f of i.flags) li.append(el('span', 'flag', f)); }
     else li.append(document.createTextNode(`[${i.status}${i.lastError ? ': ' + i.lastError : ''}]`));
     const b = el('button', 'play', '▶'); b.type = 'button';
-    b.setAttribute('aria-label', `Play the audio of the ${i.label} line at ${clock(i.startMs)}`);
+    b.setAttribute('aria-label', `Play the audio of the ${i.channel === 'mic' ? 'microphone' : 'call'} line at ${clock(i.startMs)}`);
     b.title = 'Play the audio this came from'; b.addEventListener('click', () => play(i.segmentId)); li.append(b);
     return li;
   }));

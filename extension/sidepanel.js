@@ -14,6 +14,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 $('ver').textContent = 'v' + BUILD.version + (BUILD.test ? ' TEST' : '');
 let session = null, settings = null, shownMeeting = null;
 let startError = null;   // stays on screen until the next Start (the 1 s refresh used to wipe it at once)
+let micGranted = null;    // the microphone permission for the extension's origin, as Chrome reports it
 
 function banner(kind, text, link) {
   const b = $('banner');
@@ -54,6 +55,7 @@ async function refresh() {
   if (!settings.apiKey) banner('warn', 'Set your OpenRouter key before starting.', { text: 'Open options', href: 'options.html' });
   else if (held.length) banner('err', `${held[0].lastError}: ${held.length} segment(s) are kept and will be sent once it is fixed.`, { text: 'Fix the key', href: 'options.html' });
   else if (startError) banner('err', startError);
+  else if (session?.mic?.error && ['capturing', 'paused', 'starting'].includes(session?.state)) banner('err', 'Your microphone is NOT being transcribed: ' + session.mic.error + '. The call is. To add your voice, allow the microphone on the options page, then Stop and Start again.', { text: 'Open options', href: 'options.html#microphone' });
   else if (session?.error) banner('warn', session.error);
   else if (!navigator.onLine && counts.pending) banner('warn', 'Offline: segments are saved and will be sent when the connection returns.');
   else banner();
@@ -94,7 +96,8 @@ function renderLines(items, meetingId) {
   const recent = items.slice(-150);
   ol.replaceChildren(...recent.map(i => {
     const li = el('li', i.type === 'gap' ? 'gap' : (i.flags.length ? 'dimmed' : ''));
-    li.append(el('span', 't', (i.timing === 'model' ? '' : '≈') + clock(i.startMs)), el('span', 'who ' + i.channel, i.label + ':'));
+    li.append(el('span', 't', (i.timing === 'model' ? '' : '≈') + clock(i.startMs)));
+    if (i.channel === 'mic') li.append(el('span', 'who mic', i.label + ':'));   // only You is labelled
     if (i.type === 'line') { li.append(document.createTextNode(i.text)); for (const f of i.flags) li.append(el('span', 'flag', f)); }
     else li.append(document.createTextNode(i.status === 'failed' || i.status === 'invalid' ? `[${i.status}: ${i.lastError || ''}]` : `[${i.status}…]`));
     return li;
@@ -103,7 +106,15 @@ function renderLines(items, meetingId) {
 }
 
 $('consent').addEventListener('change', renderIdle);
-$('useMic').addEventListener('change', () => { $('micNote').hidden = !$('useMic').checked; });
+async function micPermission() {
+  try { micGranted = (await navigator.permissions.query({ name: 'microphone' })).state; } catch { micGranted = 'unknown'; }
+  const want = $('useMic').checked;
+  $('micNote').hidden = !want;
+  $('micGrant').hidden = !want || micGranted === 'granted';
+}
+$('useMic').addEventListener('change', micPermission);
+$('grantMic').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('options.html#microphone') }));
+window.addEventListener('focus', micPermission);
 $('copy').addEventListener('click', async () => { await navigator.clipboard.writeText($('notice').value); $('copied').textContent = 'Copied.'; });
 
 $('start').addEventListener('click', async () => {
@@ -126,6 +137,6 @@ chrome.runtime.onMessage.addListener((msg) => {
   $('lvTab').style.width = w(msg.tab); $('lvMic').style.width = w(msg.micMuted ? 0 : msg.mic);
 });
 
-getSettings().then(s => { applyTheme(s.theme); $('useMic').checked = !!s.micDefault; $('micNote').hidden = !s.micDefault; });
+getSettings().then(s => { applyTheme(s.theme); $('useMic').checked = !!s.micDefault; micPermission(); });
 refresh();
 setInterval(refresh, 1000);

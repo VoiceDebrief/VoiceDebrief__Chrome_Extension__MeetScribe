@@ -419,6 +419,18 @@ describe('MeetScribe in Chromium', () => {
     await panel.close();
   });
 
+  test('S2: ticking the microphone before it is allowed says so and offers the way to allow it', async () => {
+    const panel = await context.newPage();
+    await panel.goto(`chrome-extension://${extId}/sidepanel.html`);
+    await panel.check('#useMic');
+    // the test profile runs with --use-fake-ui-for-media-stream, so permission reads as granted or prompt; either way the
+    // warning must match what Chrome reports
+    const state = await panel.evaluate(() => navigator.permissions.query({ name: 'microphone' }).then(p => p.state));
+    assert.equal(await panel.isVisible('#micGrant'), state !== 'granted');
+    assert.equal(await panel.isVisible('#micNote'), true);
+    await panel.close();
+  });
+
   test('A12: delete all leaves no meeting, segment, audio or line', async () => {
     await ev(() => ms.db.deleteAll());
     assert.deepEqual(await ev(() => ms.db.totals()), { meetings: 0, segments: 0, wavs: 0, lines: 0 });

@@ -36,3 +36,11 @@ Not acted on yet, from its wider assessment: the attempt ledger, indexed queries
 **S1 answered: no.** Opening the side panel straight from the toolbar icon (route a in [the plan](../plan/index.md)) did not let Chrome capture the Meet tab. The panel showed "the active tab", because it could not even read the tab's title. Its error flashed and vanished, wiped by the panel's refresh.
 
 Fixed in v0.3.2 with **route b**. The icon click is handled by MeetScribe itself, which counts as invoking the extension on that tab. It opens the panel and remembers the tab, and **Start** asks Chrome for that tab's stream. The panel names the tab it will capture, or says to click the icon on the Meet tab; an error stays until the next Start. Automation cannot click the toolbar, so the test pins the rest of the route (no tab chosen: Start disabled, a clear message; a tab that was not clicked on is refused), and **the real check is the next call**.
+
+## The second real call (Dinis Cruz, 3 November 2026)
+
+**S1 confirmed: yes.** With v0.3.2's route the Meet tab was captured and transcribed, fourteen minutes and more, lines arriving as the call went on.
+
+**S2, open: no "You" lines appeared.** The microphone was ticked, but none of the speaker's own words were transcribed. The likely causes are the microphone never being granted on the options page, or the capture page's request failing. The panel showed the reason only in small text, under the meters. v0.3.3 makes it impossible to miss. Ticking the microphone before it is allowed shows a red notice with an **Allow the microphone** button. If the microphone fails at Start, a red banner stays for the whole meeting, naming Chrome's reason and saying the call is still being transcribed. The next call answers S2.
+
+**The "Meeting:" label on every line was noise** (the editor's words: redundant). From v0.3.3 only **You** is labelled, on screen and in exports; the debrief's input keeps both labels.
