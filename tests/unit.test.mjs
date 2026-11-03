@@ -9,6 +9,7 @@ import { classify, backoffMs, parseTranscription } from '../extension/lib/openro
 import { linesFromResult, assemble, costOf, isSuspect, similarity, toText, toMarkdown, toJson, clock } from '../extension/lib/transcript.js';
 import { transcriptForPrompt, buildMessages, blocks } from '../extension/lib/debrief.js';
 import { DEBRIEF_PROMPT, LOCALES } from '../extension/lib/prompts.js';
+import { TRANSCRIPTION, DEBRIEF, AVOID, groups, perHour, debriefPerHour } from '../extension/lib/models.js';
 import { synth } from './helpers/audio.mjs';
 
 const cut = (plan, opts) => { const out = []; const s = new Segmenter(x => out.push(x), opts); const f = synth(plan); for (let i = 0; i < f.length; i += 2048) s.push(f.subarray(i, i + 2048)); s.flush('stop'); return { out, s, total: f.length }; };
@@ -236,5 +237,25 @@ describe('labels after the first real call', () => {
     const t = toText({ title: 'T', startedAt: 'x', model: 'm' }, items);
     assert.match(t, /\] from the call/); assert.match(t, /\] You: from me/); assert.doesNotMatch(t, /Meeting:/);
     assert.match(transcriptForPrompt(items), /Meeting: from the call[\s\S]*You: from me/);
+  });
+});
+
+describe('model choice', () => {
+  test('recommended models come first, priced; the rest follow; a model to avoid says why; one never recommended', () => {
+    const live = [{ id: 'openai/whisper-large-v3', prompt: '0.0000075', completion: '0' }, { id: 'deepgram/nova-3', prompt: '0.0000716666666667', completion: '0' },
+                  { id: 'openai/gpt-4o-transcribe', prompt: '0.0000025', completion: '0.00001' }, { id: 'zz/other', prompt: '0.00001', completion: '0' }];
+    const g = groups(live, TRANSCRIPTION, perHour, AVOID);
+    assert.equal(g[0].label, 'Recommended');
+    assert.equal(g[0].options[0].value, 'openai/whisper-large-v3');
+    assert.match(g[0].options.find(o => o.value === 'deepgram/nova-3').text, /\$0\.26\/h/);
+    assert.ok(!TRANSCRIPTION.some(t => t.id in AVOID), 'a model to avoid is never recommended');
+    assert.match(g[1].options.find(o => o.value === 'openai/gpt-4o-transcribe').text, /AVOID: dropped most of the speech/);
+    assert.deepEqual(g[1].options.map(o => o.value), ['openai/gpt-4o-transcribe', 'zz/other']);
+  });
+  test('prices: per hour of audio for duration-priced models; per hour of meeting for a debrief', () => {
+    assert.equal(perHour({ prompt: '0.0001', completion: '0' }).toFixed(2), '0.36');
+    assert.equal(perHour({ prompt: '0.0000025', completion: '0.00001' }), null, 'token-priced: no per-hour figure');
+    assert.equal(debriefPerHour({ prompt: '0.000004', completion: '0.00002' }).toFixed(3), '0.088');
+    assert.equal(DEBRIEF[0].id, 'google/gemini-3.5-flash', 'the default stays as voicedebrief.ai uses');
   });
 });

@@ -9,7 +9,9 @@ import * as db from './lib/db.js';
 import { assemble, costOf, clock, toText, toMarkdown, toJson } from './lib/transcript.js';
 import { drain } from './lib/queue.js';
 import { buildMessages, blocks } from './lib/debrief.js';
-import { chat, API_BASE } from './lib/openrouter.js';
+import { chat, transcribe, API_BASE } from './lib/openrouter.js';
+import { TRANSCRIPTION, DEBRIEF, AVOID, groups, perHour, debriefPerHour, money } from './lib/models.js';
+import { transcriptionModels, chatModels, fillSelect } from './lib/catalogue.js';
 import { LOCALES } from './lib/prompts.js';
 import { getSettings } from './lib/settings.js';
 import { applyTheme } from './lib/theme.js';
@@ -18,7 +20,15 @@ import { BUILD } from './build.js';
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 $('ver').textContent = 'v' + BUILD.version + (BUILD.test ? ' TEST' : '');
-getSettings().then(s => applyTheme(s.theme));
+getSettings().then(async s => {
+  applyTheme(s.theme);
+  // the model pickers: recommended first, then the live lists (cached a day)
+  const [stt, chatList] = await Promise.all([transcriptionModels().catch(() => ({ list: [] })), chatModels().catch(() => ({ list: [] }))]);
+  sttList = stt.list;
+  fillSelect($('debriefModelPick'), groups(chatList.list, DEBRIEF, debriefPerHour), s.debriefModel);
+  for (const id of ['retxModel', 'compareModel']) fillSelect($(id), groups(stt.list, TRANSCRIPTION, perHour, AVOID), s.model);
+});
+let sttList = [];
 const writing = new Set();     // meeting ids with a debrief being written
 let current = new URLSearchParams(location.search).get('id');
 let player = null;
@@ -97,6 +107,9 @@ async function render() {
     if (i.channel === 'mic') li.append(el('span', 'who mic', i.label + ':'));   // only You is labelled
     if (i.type === 'line') { li.append(document.createTextNode(i.text)); for (const f of i.flags) li.append(el('span', 'flag', f)); }
     else li.append(document.createTextNode(`[${i.status}${i.lastError ? ': ' + i.lastError : ''}]`));
+    const c = el('button', 'play', '⇄'); c.type = 'button'; c.title = 'Compare models on this piece of audio';
+    c.setAttribute('aria-label', `Compare models on the audio at ${clock(i.startMs)}`);
+    c.addEventListener('click', () => openCompare(i)); li.append(c);
     const b = el('button', 'play', '▶'); b.type = 'button';
     b.setAttribute('aria-label', `Play the audio of the ${i.channel === 'mic' ? 'microphone' : 'call'} line at ${clock(i.startMs)}`);
     b.title = 'Play the audio this came from'; b.addEventListener('click', () => play(i.segmentId)); li.append(b);
@@ -138,7 +151,8 @@ async function writeDebrief() {
   const sig = transcriptSig(segs, lines);
   writing.add(id); say(''); render();
   try {
-    const r = await chat({ apiBase: BUILD.test && s.apiBase ? s.apiBase : API_BASE, key: s.apiKey, model: s.debriefModel, messages: buildMessages(items, s.debriefLocale), zdr: s.zdr });
+    const model = $('debriefModelPick').value || s.debriefModel;   // the model chosen here, for this debrief
+    const r = await chat({ apiBase: BUILD.test && s.apiBase ? s.apiBase : API_BASE, key: s.apiKey, model, messages: buildMessages(items, s.debriefLocale), zdr: s.zdr });
     if (!(await db.getMeeting(id))) { say('That meeting was deleted while its debrief was being written; the debrief was discarded.'); return; }
     await db.updateMeeting(id, { debrief: { markdown: r.text, model: r.model, locale: s.debriefLocale, generatedAt: new Date().toISOString(), costUsd: r.cost, generationId: r.generationId, transcriptSig: sig } });
     if (current === id) say('');
@@ -147,6 +161,49 @@ async function writeDebrief() {
   } finally { writing.delete(id); lastDetailSig = ''; render(); }
 }
 $('debrief').addEventListener('click', writeDebrief);
+
+// ---- compare models on one piece of audio (the real bake-off: your own audio, your key)
+let comparing = null;
+function openCompare(item) {
+  comparing = item;
+  $('compareBox').hidden = false;
+  $('compareOut').replaceChildren();
+  const now = item.type === 'line' ? `Now: "${item.text}"` : `Now: ${item.status}`;
+  $('compareWhat').textContent = `The audio at ${clock(item.startMs)}${item.channel === 'mic' ? ' (your microphone)' : ''}. ${now}`;
+  $('compareBox').scrollIntoView({ block: 'nearest' });
+}
+$('compareClose').addEventListener('click', () => { $('compareBox').hidden = true; comparing = null; });
+$('comparePlay').addEventListener('click', () => comparing && play(comparing.segmentId));
+$('compareRun').addEventListener('click', async () => {
+  if (!comparing) return;
+  const s = await getSettings();
+  if (!s.apiKey) return say('Set your OpenRouter key on the options page first.');
+  const wav = await db.getWav(comparing.segmentId);
+  if (!wav) return say('That segment\'s audio was deleted under the retention setting, so it cannot be transcribed again.');
+  const model = $('compareModel').value, li = el('li', 'gap', `${model}: transcribing…`);
+  $('compareOut').append(li);
+  const t0 = Date.now();
+  const run = (verbose) => transcribe({ apiBase: BUILD.test && s.apiBase ? s.apiBase : API_BASE, key: s.apiKey, model, wav, language: s.language || null, verbose, zdr: s.zdr });
+  try {
+    let r; try { r = await run(!s.noVerbose[model]); } catch (e) { if (e.kind === 'fallback-json') r = await run(false); else throw e; }
+    li.className = '';
+    li.replaceChildren(el('b', null, model), document.createTextNode(` · ${((Date.now() - t0) / 1000).toFixed(1)} s · ${r.cost === null ? 'cost not reported' : money(r.cost)}: `), document.createTextNode(r.text || '(no text returned)'));
+  } catch (e) { li.textContent = `${model}: failed (${e.status || ''} ${e.message})`; }
+});
+
+// ---- transcribe a whole meeting again with another model
+$('retx').addEventListener('click', async () => {
+  const id = current, model = $('retxModel').value;
+  const m = await db.getMeeting(id);
+  if (!m || !model) return;
+  if (!confirm(`Transcribe "${m.title}" again with ${model}? Its current transcript is replaced by the new one (export it first to keep it). Segments whose audio was deleted under the retention setting cannot be redone. Each segment is one request on your key.`)) return;
+  const r = await db.retranscribe(id, model);
+  say(`Transcribing ${r.queued} segment(s) again with ${model}` + (r.noAudio ? `; ${r.noAudio} had no audio left and keep their old lines.` : '.'));
+  lastDetailSig = ''; render();
+  await drain('meetings-page', { meetingId: id, untilEmpty: true });
+  await db.reconcileStatus(id).catch(() => {});
+  say(`Done: transcribed again with ${model}.`); lastDetailSig = ''; render();
+});
 
 function download(name, text, type) {
   const a = document.createElement('a');

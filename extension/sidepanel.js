@@ -44,6 +44,12 @@ async function renderIdle() {
     : `${tab.title || 'Untitled tab'}${url ? ' (' + new URL(url).host + ')' : ''}` + (url && !isMeet ? '. Not a Google Meet tab: MeetScribe will still capture it.' : '') +
       ' To transcribe another tab, go to it and click the MeetScribe icon there.';
   $('start').disabled = !$('consent').checked || !settings.apiKey || !tab;
+  const ml = $('modelLine');
+  if (ml.dataset.model !== settings.model + settings.debriefModel) {
+    ml.dataset.model = settings.model + settings.debriefModel;
+    const a = document.createElement('a'); a.href = 'options.html#model'; a.target = '_blank'; a.textContent = 'change';
+    ml.replaceChildren(document.createTextNode(`Transcription: ${settings.model} · debrief: ${settings.debriefModel} · `), a);
+  }
 }
 
 async function refresh() {

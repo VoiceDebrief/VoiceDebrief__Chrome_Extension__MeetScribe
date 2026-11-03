@@ -174,6 +174,29 @@ export async function retryFailed(meetingId) {
   });
 }
 
+/**
+ * Transcribe a meeting again with another model: every segment whose audio is still kept goes back to pending
+ * with that model, and its lines are cleared (the user asked for this, and was told). Returns the counts.
+ */
+export async function retranscribe(meetingId, model) {
+  return tx(['meetings', 'segments', 'lines'], 'readwrite', s => {
+    const out = { queued: 0, noAudio: 0 };
+    const r = s.segments.index('meetingId').getAll(meetingId);
+    r.onsuccess = () => {
+      for (const x of r.result) {
+        if (x.hasAudio === false) { out.noAudio++; continue; }
+        if (x.status === 'sending') continue;
+        s.segments.put({ ...x, status: 'pending', model, held: false, attempts: 0, nextAttemptAt: 0, lastError: null, costUsd: null, timingRejected: false });
+        const l = s.lines.index('segmentId').getAllKeys(x.id); l.onsuccess = () => { for (const k of l.result) s.lines.delete(k); };
+        out.queued++;
+      }
+      const m = s.meetings.get(meetingId);
+      m.onsuccess = () => { if (m.result) s.meetings.put({ ...m.result, model, status: m.result.status === 'complete' || m.result.status === 'complete-with-gaps' ? 'uploading' : m.result.status }); };
+    };
+    return out;
+  });
+}
+
 /** Every segment that stopped for a key or credit problem resumes (after the key is fixed). */
 export async function resumeHeld() {
   return tx(['segments'], 'readwrite', s => {

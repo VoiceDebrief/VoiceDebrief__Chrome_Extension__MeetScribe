@@ -1,0 +1,166 @@
+{
+  "date": "2026-11-03",
+  "scoring": "WER after lower-casing, removing punctuation, and writing the scripts' numbers one way (digits)",
+  "method": "synthetic two-voice speech (google/gemini-3.8-flash-tts), 16 kHz mono WAV, under 30 s; WER after lower-casing and removing punctuation; one run per model and language",
+  "limits": "clean synthetic speech: no noise, no crosstalk, no real accents; ranks models on easy audio only",
+  "scripts": {
+    "en": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes. We move it to the fourteenth of November, and the budget stays at forty two thousand euros. Good. Then Marcus owns the onboarding guide, due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?",
+    "en-fast": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes. We move it to the fourteenth of November, and the budget stays at forty two thousand euros. Good. Then Marcus owns the onboarding guide, due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?",
+    "pt": "Bom dia a todos. Joana, consegue confirmar a data de lançamento do piloto em Lisboa? Sim. Passa para catorze de novembro, e o orçamento mantém-se em quarenta e dois mil euros. Ótimo. O Ricardo fica com o guia de integração, para sexta-feira, e eu envio o contrato hoje.",
+    "en-hard": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes. We move it to the fourteenth of November, and the budget stays at forty two thousand euros. Good. Then Marcus owns the onboarding guide, due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?"
+  },
+  "clipSeconds": {
+    "en-hard": 13.6
+  },
+  "results": [
+    {
+      "model": "openai/whisper-large-v3",
+      "lang": "en-hard",
+      "ms": 1437,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.0003402046875,
+      "seconds": 13.6081875,
+      "wer": 0,
+      "text": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we move it to the 14th of November and the budget stays at 42,000 euros. Good. Then Marcus owns the onboarding guide due next Friday and I will send the contract to Hartwell today. One open question. Do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "openai/whisper-large-v3-turbo",
+      "lang": "en-hard",
+      "ms": 420,
+      "verbose": true,
+      "segments": 4,
+      "timingRejected": false,
+      "cost": 0.00015120208782207103,
+      "seconds": 13.608187904,
+      "wer": 0.029,
+      "text": "Morning everyone, before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we move into the 14th of November and the budget stays at 42,000 euros. Good, then Marcus owns the onboarding guide due next Friday and I will send the contract to Hartwell today. One open question, do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "openai/whisper-1",
+      "lang": "en-hard",
+      "ms": 3583,
+      "verbose": true,
+      "segments": 5,
+      "timingRejected": false,
+      "cost": 0.0014,
+      "seconds": 14,
+      "wer": 0,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we move it to the 14th of November, and the budget stays at 42,000 euros. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question. Do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "openai/gpt-transcribe",
+      "lang": "en-hard",
+      "ms": 1260,
+      "verbose": false,
+      "segments": 0,
+      "timingRejected": false,
+      "cost": 0.00105,
+      "seconds": 14,
+      "wer": 0.015,
+      "text": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we moved it to the 14th of November and the budget stays at 42,000 euros. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "openai/gpt-4o-transcribe",
+      "lang": "en-hard",
+      "ms": 1155,
+      "verbose": false,
+      "segments": 0,
+      "timingRejected": false,
+      "cost": 0.00057,
+      "seconds": null,
+      "wer": 0.765,
+      "text": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot?"
+    },
+    {
+      "model": "elevenlabs/scribe-v2",
+      "lang": "en-hard",
+      "ms": 781,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.0008316114583331822,
+      "seconds": 13.6081875,
+      "wer": 0.015,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes. We move it to the fourteenth of November, and the budget stays at forty-two thousand euros. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Heartwell today. One open question. Do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "assemblyai/universal-3-6-pro",
+      "lang": "en-hard",
+      "ms": 1163,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.0011339995464,
+      "seconds": 13.608,
+      "wer": 0.029,
+      "text": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we moved it to the 14th of November and the budget stays at €42,000. Good. Then Marcus owns the onboarding guide due next Friday and I will send the contract to Hartwell today. One open question. Do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "deepgram/nova-3",
+      "lang": "en-hard",
+      "ms": 415,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.0009752534733337869,
+      "seconds": 13.608188,
+      "wer": 0.015,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes. We move it to the fourteenth of November, the budget stays at forty two thousand euros. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question. Do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "mistralai/voxtral-small-transcribe-3-0",
+      "lang": "en-hard",
+      "ms": 1299,
+      "verbose": true,
+      "segments": 6,
+      "timingRejected": false,
+      "cost": 0.0008666671,
+      "seconds": 13,
+      "wer": 0.029,
+      "text": "Morning everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we moved it to the fourteenth of November and the budget stays at €42,000. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "mistralai/voxtral-mini-transcribe-3-0",
+      "lang": "en-hard",
+      "ms": 2038,
+      "verbose": true,
+      "segments": 6,
+      "timingRejected": false,
+      "cost": 0.0007583329,
+      "seconds": 13,
+      "wer": 0.029,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we moved it to the 14th of November, and the budget stays at €42,000. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question: do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "nvidia/nemotron-3.5-transcribe",
+      "lang": "en-hard",
+      "error": "429 Provider returned 429"
+    },
+    {
+      "model": "google/gemini-3.5-transcribe",
+      "lang": "en-hard",
+      "ms": 2207,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.00174,
+      "seconds": null,
+      "wer": 0.044,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we moved it to the 14th of November and the budget stays at €42,000. Good. Then Marcus owns the onboarding guide do next Friday and I will send the contract to Hartwell today. One open question, do we still need the security review from Nadia before the pilot goes live?"
+    },
+    {
+      "model": "qwen/qwen3-asr-1.7b",
+      "lang": "en-hard",
+      "ms": 29530,
+      "verbose": true,
+      "segments": 1,
+      "timingRejected": false,
+      "cost": 0.00010206,
+      "seconds": 13.608,
+      "wer": 0,
+      "text": "Morning, everyone. Before we start, Priya, can you confirm the launch date for the Lisbon pilot? Yes, we move it to the 14th of November, and the budget stays at 42,000 euros. Good. Then Marcus owns the onboarding guide due next Friday, and I will send the contract to Hartwell today. One open question: Do we still need the security review from Nadia before the pilot goes live?"
+    }
+  ]
+}

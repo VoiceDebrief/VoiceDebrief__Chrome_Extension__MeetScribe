@@ -125,3 +125,11 @@ export async function chat({ apiBase = API_BASE, key, model, messages, zdr = tru
   if (typeof text !== 'string' || !text.trim()) throw new ApiError(502, 'the model returned no text');
   return { text: text.trim(), model: body.model || model, cost: Number.isFinite(body?.usage?.cost) ? body.usage.cost : null, generationId: body.id || null };
 }
+
+/** The live chat (text) catalogue, for the debrief: [{ id, name, prompt, completion }]. */
+export async function listChatModels({ apiBase = API_BASE } = {}) {
+  const { body } = await call(apiBase, null, '/models');
+  return ((body && body.data) || [])
+    .filter(m => (m.architecture?.output_modalities || ['text']).includes('text') && (m.architecture?.input_modalities || ['text']).includes('text'))
+    .map(m => ({ id: m.id, name: m.name, prompt: m.pricing?.prompt ?? null, completion: m.pricing?.completion ?? null }));
+}

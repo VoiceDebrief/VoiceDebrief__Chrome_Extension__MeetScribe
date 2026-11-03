@@ -23,8 +23,18 @@
     <div class="meta" id="meta"></div>
     <div class="row" style="margin-top:.6rem">
       <button id="exTxt">Export TXT</button><button id="exMd">Export Markdown</button><button id="exJson">Export JSON</button>
-      <button class="primary" id="debrief">Write the debrief</button><button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg" role="status" aria-live="polite"></span>
+      <button class="primary" id="debrief">Write the debrief</button><select id="debriefModelPick" aria-label="Model for the debrief" style="max-width:22rem"></select><button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg" role="status" aria-live="polite"></span>
     </div>
+    <div class="row small">
+      <label for="retxModel">Transcribe again with</label><select id="retxModel" style="max-width:24rem"></select><button id="retx">Transcribe again</button>
+    </div>
+    <section id="compareBox" class="box" hidden>
+      <h2>Compare models on one piece of audio</h2>
+      <p class="small dim" id="compareWhat"></p>
+      <div class="row"><select id="compareModel" aria-label="Model to compare" style="max-width:24rem"></select><button class="primary" id="compareRun">Transcribe this piece</button><button id="comparePlay">▶ Play it</button><button id="compareClose">Close</button></div>
+      <ol class="lines" id="compareOut"></ol>
+      <p class="small dim">Comparisons are not saved and do not change the transcript. Each costs one request.</p>
+    </section>
     <section id="debriefBox" class="debrief" hidden>
       <h2 style="margin-top:1rem">Debrief</h2>
       <p class="small dim" id="debriefMeta"></p>

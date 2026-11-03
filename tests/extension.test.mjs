@@ -437,6 +437,64 @@ describe('MeetScribe in Chromium', () => {
     await panel.close();
   });
 
+  test('models: the options page offers the recommended models first and every live one, and saves the choice', async () => {
+    await ev(() => chrome.storage.local.remove('modelCache'));
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extId}/options.html`);
+    // the replay lists only recommended models, so the second group ("every model") is empty and not shown
+    await page.waitForFunction(() => /OpenRouter lists/.test(document.getElementById('modelNote').textContent) && document.querySelectorAll('#debriefModel optgroup').length >= 1);
+    assert.equal(await page.$eval('#model optgroup', g => g.label), 'Recommended');
+    assert.match(await page.$eval('#model', s => [...s.options].find(o => o.value === 'deepgram/nova-3').textContent), /Better: deepgram\/nova-3 · \$0\.26\/h/);
+    await page.selectOption('#model', 'deepgram/nova-3');
+    await page.selectOption('#debriefModel', 'anthropic/claude-opus-5.5');
+    await page.waitForTimeout(300);
+    const st = await ev(() => chrome.storage.local.get(['model', 'debriefModel']));
+    assert.deepEqual(st, { model: 'deepgram/nova-3', debriefModel: 'anthropic/claude-opus-5.5' });
+    await settings({ model: 'openai/whisper-large-v3', debriefModel: 'google/gemini-3.5-flash' });
+    await page.close();
+  });
+
+  test('models: compare transcribes one piece again with another model, side by side, and changes nothing', async () => {
+    await meeting('m-cmp', { title: 'Compare' });
+    await queueSegment('m-cmp', 0); await ev(() => ms.drain('t', { meetingId: 'm-cmp', untilEmpty: true }));
+    const before = await ev(() => ms.db.linesFor('m-cmp'));
+    replay.state.requests.length = 0;
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extId}/meetings.html?id=m-cmp`);
+    await page.waitForFunction(() => [...document.querySelectorAll('#compareModel option')].some(o => o.value === 'deepgram/nova-3'));
+    await page.click('#lines li button[title="Compare models on this piece of audio"]');
+    await page.selectOption('#compareModel', 'deepgram/nova-3');
+    await page.click('#compareRun');
+    await page.waitForFunction(() => /deepgram\/nova-3 · .* s · /.test(document.getElementById('compareOut').textContent));
+    assert.equal(replay.state.requests.at(-1).model, 'deepgram/nova-3');
+    assert.deepEqual(await ev(() => ms.db.linesFor('m-cmp')), before, 'the transcript is unchanged');
+    await page.close();
+  });
+
+  test('models: transcribe a meeting again with another model, and write the debrief with the model picked there', async () => {
+    await meeting('m-retx', { title: 'Again' });
+    for (const i of [0, 1]) await queueSegment('m-retx', i);
+    await ev(() => ms.drain('t', { meetingId: 'm-retx', untilEmpty: true }));
+    replay.state.requests.length = 0; replay.state.chats.length = 0;
+    const page = await context.newPage();
+    page.on('dialog', d => d.accept());
+    await page.goto(`chrome-extension://${extId}/meetings.html?id=m-retx`);
+    await page.waitForFunction(() => [...document.querySelectorAll('#retxModel option')].some(o => o.value === 'deepgram/nova-3'));
+    await page.selectOption('#retxModel', 'deepgram/nova-3');
+    await page.click('#retx');
+    await page.waitForFunction(() => /Done: transcribed again with deepgram\/nova-3/.test(document.getElementById('msg').textContent), null, { timeout: 15000 });
+    assert.deepEqual(replay.state.requests.map(r => r.model), ['deepgram/nova-3', 'deepgram/nova-3']);
+    const segs = await ev(() => ms.db.segmentsFor('m-retx'));
+    assert.ok(segs.every(s => s.status === 'done' && s.model === 'deepgram/nova-3'));
+    assert.equal((await ev(() => ms.db.getMeeting('m-retx'))).model, 'deepgram/nova-3');
+    await page.waitForFunction(() => [...document.querySelectorAll('#debriefModelPick option')].some(o => o.value === 'anthropic/claude-opus-5.5'));
+    await page.selectOption('#debriefModelPick', 'anthropic/claude-opus-5.5');
+    await page.click('#debrief');
+    await page.waitForSelector('#debriefBody h3');
+    assert.equal(replay.state.chats.at(-1).model, 'anthropic/claude-opus-5.5');
+    await page.close();
+  });
+
   test('A12: delete all leaves no meeting, segment, audio or line', async () => {
     await ev(() => ms.db.deleteAll());
     assert.deepEqual(await ev(() => ms.db.totals()), { meetings: 0, segments: 0, wavs: 0, lines: 0 });

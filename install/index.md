@@ -1,4 +1,4 @@
-# Install and use MeetScribe v0.3.4
+# Install and use MeetScribe v0.3.5
 
 > **Beta: do not use it for confidential meetings.** MeetScribe keeps everything in your browser, but the audio and transcript go to OpenRouter and on to a model provider, where we cannot see or verify what happens to them. [Where your audio goes](../index.md#where-your-audio-goes) has the detail.
 
@@ -51,6 +51,15 @@ Then **Load unpacked** and pick the repository's `extension/` folder. After a `g
 
 ![The side panel during a meeting (test build, fake audio)](images/panel-live.png)
 
+## Choosing better models
+
+The defaults are cheap and good: `openai/whisper-large-v3` for the transcript, and `google/gemini-3.5-flash` for the debrief, as on voicedebrief.ai. If the transcript struggles, with fast talkers for example, try another model:
+
+- **Options, Transcription:** recommended models first, with their price per hour and what our test showed (`deepgram/nova-3` did best overall), then every model OpenRouter lists.
+- **Meetings, ⇄ on any line:** transcribes that piece of audio again with the model you pick, side by side, without changing anything. This is the best way to choose: your audio, your talkers.
+- **Meetings, Transcribe again with:** redoes a whole meeting with another model. Export the old one first if you want to keep it.
+- **Meetings, the picker beside Write the debrief:** a stronger model for one debrief, `anthropic/claude-opus-5.5` for example, at about 7 cents for an hour of meeting.
+
 ## Afterwards
 
 **Meetings** (in the panel's header) lists every meeting. You can:
@@ -82,7 +91,7 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 
 ## A first test: a short script
 
-1. Install or update, and check the options page's footer shows **0.3.4**.
+1. Install or update, and check the options page's footer shows **0.3.5**.
 2. Make or reuse a capped OpenRouter key; **Save and test**.
 3. A two-person Meet call, headphones on, microphone **on**. Talk for five minutes, with one stretch muted in Meet only (S7).
 4. Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).

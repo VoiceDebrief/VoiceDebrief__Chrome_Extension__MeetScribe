@@ -1,4 +1,4 @@
-# What is built in v0.3.4
+# What is built in v0.3.5
 
 The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the reality file: if something is not listed here as built, it does not exist yet, whatever [brief v2.0](../brief/index.md) says.
 

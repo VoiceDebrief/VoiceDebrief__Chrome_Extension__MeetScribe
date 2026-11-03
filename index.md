@@ -2,11 +2,11 @@
 
 Transcribes the Google Meet call you are in and writes the debrief: key points, decisions, actions, open questions. It runs as a Chrome extension on your own OpenRouter key. There is no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), and no server of ours. Your own words are labelled **You**; everything else is the call, and every point in the debrief carries the time of the line it came from.
 
-[Download MeetScribe v0.3.4 (zip, 54 KB)](releases/meetscribe-latest.zip)
+[Download MeetScribe v0.3.5 (zip, 58 KB)](releases/meetscribe-latest.zip)
 
 > **Beta: do not use it for confidential meetings.** Everything you transcribe is sent to OpenRouter, a third party, and what happens to it there is outside our control and our view. [Where your audio goes](#where-your-audio-goes) says exactly what that means.
 >
-> This build follows [a code review of 18 findings](reviews/index.md) and the first real calls: capturing the call works; the microphone is being checked. It has been tested in Chromium with fake audio and replayed responses (63 automated tests), and **its first real Meet calls are being made now**. Expect rough edges, and please [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md).
+> This build follows [a code review of 18 findings](reviews/index.md) and the first real calls: capturing the call works; the microphone is being checked. It has been tested in Chromium with fake audio and replayed responses (68 automated tests), and **its first real Meet calls are being made now**. Expect rough edges, and please [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md).
 
 ![A meeting in MeetScribe: the debrief above the transcript, each point timed to its line (from the automated test, with synthetic audio, so the transcript repeats itself)](install/images/meetings.png)
 

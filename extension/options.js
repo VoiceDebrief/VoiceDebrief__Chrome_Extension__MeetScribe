@@ -4,6 +4,8 @@ import * as db from './lib/db.js';
 import { getSettings, setSettings, maskKey } from './lib/settings.js';
 import { checkKey, listTranscriptionModels, API_BASE } from './lib/openrouter.js';
 import { LOCALES } from './lib/prompts.js';
+import { TRANSCRIPTION, DEBRIEF, AVOID, groups, perHour, debriefPerHour } from './lib/models.js';
+import { transcriptionModels, chatModels, fillSelect } from './lib/catalogue.js';
 import { SCHEMES, applyTheme } from './lib/theme.js';
 import { BUILD } from './build.js';
 
@@ -21,9 +23,7 @@ async function load() {
   $('language').value = s.language; $('zdr').checked = s.zdr; $('micDefault').checked = s.micDefault;
   $('retention').value = String(s.retentionDays);
   $('debriefLocale').replaceChildren(...Object.entries(LOCALES).map(([k, v]) => opt(k, v.label))); $('debriefLocale').value = s.debriefLocale;
-  $('debriefModel').value = s.debriefModel;
   $('theme').replaceChildren(...Object.entries(SCHEMES).map(([k, v]) => opt(k, `${v.label} (${v.note})`))); $('theme').value = applyTheme(s.theme);
-  const sel = $('model'); if (![...sel.options].some(o => o.value === s.model)) sel.append(opt(s.model, s.model)); sel.value = s.model;
   await devices(s);
   const t = await db.totals();
   $('totals').textContent = `${t.meetings} meeting(s), ${t.segments} segment(s), ${t.wavs} with audio kept, ${t.lines} transcript line(s).`;
@@ -85,22 +85,24 @@ $('testTone').addEventListener('click', async () => {
   o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.6); o.onended = () => ctx.close();
 });
 
-$('loadModels').addEventListener('click', async () => {
+async function loadModels(force = false) {
   const s = await getSettings();
   try {
-    const models = await listTranscriptionModels({ apiBase: apiBase(s) });
-    const per = (m) => (+m.completion > 0 ? 'token-priced' : +m.prompt < 0.01 ? '$' + (+m.prompt * 3600).toFixed(3) + '/h' : 'price unit not stated');
-    $('model').replaceChildren(...models.map(m => opt(m.id, `${m.id} (${per(m)})`)));
-    if (![...$('model').options].some(o => o.value === s.model)) $('model').append(opt(s.model, s.model));
-    $('model').value = s.model;
-    $('modelNote').textContent = `${models.length} transcription models listed by OpenRouter now. The cost shown in a meeting is what OpenRouter reports per request, not this list.`;
-  } catch (e) { $('modelNote').textContent = 'Could not load the list: ' + e.message; }
-});
+    const stt = await transcriptionModels(force);
+    fillSelect($('model'), groups(stt.list, TRANSCRIPTION, perHour, AVOID), s.model);
+    $('modelNote').textContent = `Recommended first, then all ${stt.list.length} transcription models OpenRouter lists (${stt.cached ? 'as of ' + new Date(stt.at).toLocaleString() : 'just now'}). Price per hour of audio; a meeting shows what OpenRouter actually charged.`;
+  } catch (e) { fillSelect($('model'), groups([], TRANSCRIPTION, perHour), s.model); $('modelNote').textContent = 'Could not load the live list (' + e.message + '); the recommended models are still here.'; }
+  try {
+    const chat = await chatModels(force);
+    fillSelect($('debriefModel'), groups(chat.list, DEBRIEF, debriefPerHour), s.debriefModel);
+  } catch (e) { fillSelect($('debriefModel'), groups([], DEBRIEF, debriefPerHour), s.debriefModel); $('debriefNote').textContent = 'Could not load the live list (' + e.message + '); the recommended models are still here.'; }
+}
+$('loadModels').addEventListener('click', () => loadModels(true));
 $('model').addEventListener('change', async () => { await setSettings({ model: $('model').value }); saved(); });
 $('language').addEventListener('change', async () => { await setSettings({ language: $('language').value.trim().toLowerCase() }); saved(); });
 $('zdr').addEventListener('change', async () => { await setSettings({ zdr: $('zdr').checked }); saved(); });
 $('debriefLocale').addEventListener('change', async () => { await setSettings({ debriefLocale: $('debriefLocale').value }); saved(); });
-$('debriefModel').addEventListener('change', async () => { await setSettings({ debriefModel: $('debriefModel').value.trim() || 'google/gemini-3.5-flash' }); saved(); });
+$('debriefModel').addEventListener('change', async () => { await setSettings({ debriefModel: $('debriefModel').value || 'google/gemini-3.5-flash' }); saved(); });
 $('theme').addEventListener('change', async () => { await setSettings({ theme: applyTheme($('theme').value) }); saved(); });
 $('retention').addEventListener('change', async () => { await setSettings({ retentionDays: Number($('retention').value) }); saved(); });
 
@@ -113,4 +115,4 @@ $('deleteAll').addEventListener('click', async () => {
 });
 
 navigator.storage?.persist?.();
-load();
+load().then(() => loadModels());

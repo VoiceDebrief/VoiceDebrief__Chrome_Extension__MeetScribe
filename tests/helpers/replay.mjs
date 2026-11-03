@@ -22,7 +22,13 @@ export function startReplay() {
       const url = new URL(req.url, 'http://127.0.0.1');
       const send = (f) => { res.writeHead(f.status, { 'content-type': 'application/json', ...cors, ...f.headers }); res.end(JSON.stringify(f.body)); };
       if (url.pathname === '/api/v1/key') return send(fixture(state.key));
-      if (url.pathname === '/api/v1/models') return send({ status: 200, headers: {}, body: { data: [{ id: 'openai/whisper-large-v3', name: 'Whisper Large V3', pricing: { prompt: '0.0000075', completion: '0' } }] } });
+      if (url.pathname === '/api/v1/models') {
+        const stt = [{ id: 'openai/whisper-large-v3', name: 'Whisper Large V3', pricing: { prompt: '0.0000075', completion: '0' }, architecture: { input_modalities: ['audio'], output_modalities: ['transcription'] } },
+                     { id: 'deepgram/nova-3', name: 'Nova 3', pricing: { prompt: '0.0000716666666667', completion: '0' }, architecture: { input_modalities: ['audio'], output_modalities: ['transcription'] } }];
+        const chatModels = [{ id: 'google/gemini-3.5-flash', name: 'Gemini 3.5 Flash', pricing: { prompt: '0.0000015', completion: '0.000009' }, architecture: { input_modalities: ['text'], output_modalities: ['text'] } },
+                            { id: 'anthropic/claude-opus-5.5', name: 'Claude Opus 5.5', pricing: { prompt: '0.000004', completion: '0.00002' }, architecture: { input_modalities: ['text'], output_modalities: ['text'] } }];
+        return send({ status: 200, headers: {}, body: { data: url.searchParams.get('output_modalities') === 'transcription' ? stt : [...stt, ...chatModels] } });
+      }
       let p = {}; try { p = JSON.parse(body); } catch {}
       if (url.pathname === '/api/v1/chat/completions') {
         state.chats.push({ model: p.model, zdr: p.provider?.zdr ?? null, system: p.messages?.[0]?.content || '', user: p.messages?.[1]?.content || '' });

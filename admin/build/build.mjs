@@ -4,7 +4,7 @@
 // The domain comes from the CNAME file: canonical links, og:url, sitemap.xml and robots.txt are built from it.
 //   node admin/build/build.mjs           write
 //   node admin/build/build.mjs --check   exit 1 if any generated file is out of date (used by validate.mjs)
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -156,7 +156,22 @@ function modelTable() {
   }
   return `Snapshot taken ${d.fetched_at.replace('T', ' ').slice(0, 16)} UTC: ${d.count} models.\n\n` + t.join('\n');
 }
-const GENERATED = { 'stt-models': modelTable };
+function bakeoffTable() {
+  const dir = join(ROOT, 'data/bakeoff');
+  const runs = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.json')).sort().map(f => JSON.parse(readFileSync(join(dir, f), 'utf8'))) : [];
+  const rows = new Map();
+  for (const r of runs.flatMap(x => x.results)) { if (!rows.has(r.model)) rows.set(r.model, {}); rows.get(r.model)[r.lang] = r; }
+  const clips = ['en', 'en-fast', 'en-hard', 'pt'];
+  const cell = (r) => !r ? 'not run' : r.error ? 'error (' + r.error.split(' ')[0] + ')' : (r.wer * 100).toFixed(1) + '%';
+  const t = ['| Model | English | English, fast | Fast, noisy, Opus 12 kb/s | Portuguese | Timestamps |', '|---|---|---|---|---|---|'];
+  const score = (v) => clips.reduce((a, c) => a + (v[c] && !v[c].error ? v[c].wer : 1), 0);
+  for (const [m, v] of [...rows].sort((a, b) => score(a[1]) - score(b[1]))) {
+    const any = clips.map(c => v[c]).find(r => r && !r.error);
+    t.push(`| \`${m}\` | ${clips.map(c => cell(v[c])).join(' | ')} | ${any ? (any.verbose ? 'yes' : 'no') : '?'} |`);
+  }
+  return `${runs.length} run(s), ${runs.map(r => r.date).filter((x, i, a) => a.indexOf(x) === i).join(', ')}. Word error rate; lower is better.\n\n` + t.join('\n');
+}
+const GENERATED = { 'stt-models': modelTable, 'bakeoff': bakeoffTable };
 
 function fillRegions(md) {
   return md.replace(/<!-- generated:([a-z-]+) -->[\s\S]*?<!-- \/generated:\1 -->/g,
