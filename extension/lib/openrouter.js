@@ -101,3 +101,14 @@ export async function listTranscriptionModels({ apiBase = API_BASE } = {}) {
   const { body } = await call(apiBase, null, '/models?output_modalities=transcription');
   return ((body && body.data) || []).map(m => ({ id: m.id, name: m.name, prompt: m.pricing?.prompt ?? null, completion: m.pricing?.completion ?? null }));
 }
+
+/** One chat completion (the debrief). Returns { text, model, cost|null, generationId|null }. */
+export async function chat({ apiBase = API_BASE, key, model, messages, zdr = true, temperature = 0.2 }) {
+  const { body } = await call(apiBase, key, '/chat/completions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, temperature, usage: { include: true }, ...(zdr ? { provider: { zdr: true } } : {}) }),
+  });
+  const text = body?.choices?.[0]?.message?.content;
+  if (typeof text !== 'string' || !text.trim()) throw new ApiError(502, 'the model returned no text');
+  return { text: text.trim(), model: body.model || model, cost: Number.isFinite(body?.usage?.cost) ? body.usage.cost : null, generationId: body.id || null };
+}

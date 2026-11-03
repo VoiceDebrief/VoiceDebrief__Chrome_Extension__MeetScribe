@@ -1,0 +1,86 @@
+/* Vendored from VoiceDebrief/VoiceDebrief__Website, website/vd-tokens.css at commit 30ae8d9 (layer A: the five
+   --vd-* schemes, unchanged). MeetScribe is a VoiceDebrief product and takes its colour from the same file;
+   refresh with admin/build/vendor-vd.mjs. Switch scheme with data-vd-theme on <html>; absent is Signal. */
+
+:root,
+[data-vd-theme="signal"] {
+  --vd-p:#FFFFFF; --vd-b:#F8FAFC; --vd-c:#FFFFFF; --vd-l:#E3E9EF; --vd-L:#D8E1E9;
+  --vd-i:#0B1B2B; --vd-t:#45596E; --vd-m:#6B7F94; --vd-f:#8697A8;
+  --vd-a:#0E9E72; --vd-ai:#FFFFFF; --vd-at:#0A7D5A;
+  --vd-tn:#F2FBF7; --vd-tl:#9FD8C4; --vd-ti:#204738;
+  --vd-wl:#DFA100; --vd-wb:#FFF8E8; --vd-wi:#6E5000; --vd-ws:#513A00;
+  --vd-e:#C0392B; --vd-sh:rgba(11,27,43,.09); --vd-pz:#26394D; --vd-ps:#F2F5F8;
+  --vd-off:#EDF1F5; --vd-offi:#8697A8;
+  --vd-k:#12283C; --vd-k2:#1B3A55;
+  --vd-scrim:rgba(11,27,43,.62);
+  --vd-ki:#F2F6FA; --vd-km:#A9BDD2; --vd-kl:rgba(255,255,255,.12);
+}
+
+[data-vd-theme="night"] {
+  --vd-p:#08131F; --vd-b:#0E1E2E; --vd-c:#0C1B2A;
+  --vd-l:rgba(255,255,255,.10); --vd-L:rgba(255,255,255,.16);
+  --vd-i:#F2F6FA; --vd-t:#A8BBCE; --vd-m:#8CA2B8; --vd-f:#6E869D;
+  --vd-a:#12C08A; --vd-ai:#04231A; --vd-at:#3FD6A6;
+  --vd-tn:rgba(18,192,138,.09); --vd-tl:rgba(18,192,138,.38); --vd-ti:#CFEBE0;
+  --vd-wl:#F0B429; --vd-wb:rgba(240,180,41,.09); --vd-wi:#E8D9B4; --vd-ws:#F5C860;
+  --vd-e:#FF7A6B; --vd-sh:rgba(0,0,0,.45); --vd-pz:#12202E; --vd-ps:#050D16;
+  --vd-off:rgba(255,255,255,.07); --vd-offi:#6E869D;
+  --vd-k:#050D16; --vd-k2:#12202E;
+  --vd-ki:#F2F6FA; --vd-km:#8CA2B8; --vd-kl:rgba(255,255,255,.10);
+  --vd-scrim:rgba(0,0,0,.70);
+}
+
+[data-vd-theme="paper"] {
+  --vd-p:#FBF7F0; --vd-b:#F4EDE1; --vd-c:#FFFDF9; --vd-l:#E5DBC9; --vd-L:#D6C9B2;
+  --vd-i:#211C15; --vd-t:#54483A; --vd-m:#786A58; --vd-f:#95886F;
+  --vd-a:#A8442A; --vd-ai:#FFF7F2; --vd-at:#8E3620;
+  --vd-tn:#F8E9E0; --vd-tl:#E0B7A3; --vd-ti:#5A2313;
+  --vd-wl:#8A6A18; --vd-wb:#F3EAD2; --vd-wi:#5C4711; --vd-ws:#3D2F07;
+  --vd-e:#96271A; --vd-sh:rgba(70,52,30,.14); --vd-pz:#3B3125; --vd-ps:#F0E7D6;
+  --vd-off:#EDE4D5; --vd-offi:#95886F;
+  --vd-k:#2E2619; --vd-k2:#3B3125;
+  --vd-ki:#FBF7F0; --vd-km:#C3B49B; --vd-kl:rgba(255,255,255,.13);
+  --vd-scrim:rgba(33,28,21,.62);
+}
+
+[data-vd-theme="blueprint"] {
+  --vd-p:#FFFFFF; --vd-b:#F1F3F7; --vd-c:#FFFFFF; --vd-l:#DDE1E9; --vd-L:#C4CAD6;
+  --vd-i:#101318; --vd-t:#3E4653; --vd-m:#616B7A; --vd-f:#828C9C;
+  --vd-a:#1B4DFF; --vd-ai:#FFFFFF; --vd-at:#1540D6;
+  --vd-tn:#EEF1FF; --vd-tl:#B7C4FF; --vd-ti:#152A80;
+  --vd-wl:#B45309; --vd-wb:#FDF3E7; --vd-wi:#7A3D06; --vd-ws:#54280A;
+  --vd-e:#C81E1E; --vd-sh:rgba(16,19,24,.10); --vd-pz:#101318; --vd-ps:#EEF0F4;
+  --vd-off:#EDEFF3; --vd-offi:#828C9C;
+  --vd-k:#101318; --vd-k2:#1D222B;
+  --vd-ki:#FFFFFF; --vd-km:#A8B0BE; --vd-kl:rgba(255,255,255,.14);
+  --vd-scrim:rgba(16,19,24,.62);
+}
+
+[data-vd-theme="ember"] {
+  --vd-p:#16130F; --vd-b:#201B15; --vd-c:#1C1813;
+  --vd-l:rgba(255,255,255,.09); --vd-L:rgba(255,255,255,.16);
+  --vd-i:#F7F1E7; --vd-t:#C6B9A6; --vd-m:#A99A85; --vd-f:#8A7C68;
+  --vd-a:#E0A22B; --vd-ai:#231705; --vd-at:#F0BB56;
+  --vd-tn:rgba(224,162,43,.10); --vd-tl:rgba(224,162,43,.38); --vd-ti:#EBDCC2;
+  --vd-wl:#8FB08A; --vd-wb:rgba(143,176,138,.10); --vd-wi:#CDE0C9; --vd-ws:#A8CBA3;
+  --vd-e:#E4705C; --vd-sh:rgba(0,0,0,.50); --vd-pz:#2A241C; --vd-ps:#100D0A;
+  --vd-off:rgba(255,255,255,.08); --vd-offi:#8A7C68;
+  --vd-k:#100D0A; --vd-k2:#2A241C;
+  --vd-ki:#F7F1E7; --vd-km:#A99A85; --vd-kl:rgba(255,255,255,.10);
+  --vd-scrim:rgba(0,0,0,.70);
+}
+
+
+/* ── Shape and type ──────────────────────────────────────────────────────────
+   Not per-scheme: a scheme changes colour, never layout. Values from the design
+   pack's closing note. 16px is the floor for any input — anything smaller makes
+   iOS zoom the page on focus. */
+
+:root {
+  --vd-r-panel:18px;   /* the workflow panel                    */
+  --vd-r-card:13px;    /* cards, result blocks                  */
+  --vd-r-ctl:10px;     /* buttons, inputs, chips with corners   */
+  --vd-r-chip:999px;   /* pills                                 */
+  --vd-font: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --vd-font-mono: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}

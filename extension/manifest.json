@@ -1,23 +1,64 @@
 {
   "manifest_version": 3,
-  "name": "MeetScribe",
-  "version": "0.2.0",
-  "description": "Transcribe the Google Meet call you are in, on your own OpenRouter key. No bot, no Google recording, no server of ours.",
+  "name": "VoiceDebrief MeetScribe",
+  "version": "0.3.0",
+  "description": "VoiceDebrief's transcript and debrief for the Google Meet call you are in, on your own OpenRouter key. No bot, no Google recording, no server of ours.",
   "homepage_url": "https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe",
   "minimum_chrome_version": "116",
-  "permissions": ["tabCapture", "offscreen", "activeTab", "sidePanel", "storage", "unlimitedStorage", "alarms"],
-  "host_permissions": ["https://openrouter.ai/*"],
-  "background": { "service_worker": "service-worker.js", "type": "module" },
-  "action": { "default_title": "MeetScribe: open the side panel", "default_icon": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" } },
-  "side_panel": { "default_path": "sidepanel.html" },
-  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "permissions": [
+    "tabCapture",
+    "offscreen",
+    "activeTab",
+    "sidePanel",
+    "storage",
+    "unlimitedStorage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://openrouter.ai/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "MeetScribe: open the side panel",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "commands": {
-    "_execute_action": { "suggested_key": { "default": "Alt+Shift+S" }, "description": "Open MeetScribe on this tab" },
-    "toggle-mic": { "suggested_key": { "default": "Alt+Shift+M" }, "description": "Mute or unmute MeetScribe's microphone (separate from Meet's)" },
-    "stop-capture": { "description": "Stop transcribing" }
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Open MeetScribe on this tab"
+    },
+    "toggle-mic": {
+      "suggested_key": {
+        "default": "Alt+Shift+M"
+      },
+      "description": "Mute or unmute MeetScribe's microphone (separate from Meet's)"
+    },
+    "stop-capture": {
+      "description": "Stop transcribing"
+    }
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://openrouter.ai"
   },
-  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" }
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
 }

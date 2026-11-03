@@ -3,6 +3,8 @@
 import * as db from './lib/db.js';
 import { getSettings, setSettings, maskKey } from './lib/settings.js';
 import { checkKey, listTranscriptionModels, API_BASE } from './lib/openrouter.js';
+import { LOCALES } from './lib/prompts.js';
+import { SCHEMES, applyTheme } from './lib/theme.js';
 import { BUILD } from './build.js';
 
 const $ = (id) => document.getElementById(id);
@@ -18,6 +20,9 @@ async function load() {
   $('key').value = ''; $('key').placeholder = s.apiKey ? maskKey(s.apiKey) + ' (saved)' : 'sk-or-v1-…';
   $('language').value = s.language; $('zdr').checked = s.zdr; $('micDefault').checked = s.micDefault;
   $('retention').value = String(s.retentionDays);
+  $('debriefLocale').replaceChildren(...Object.entries(LOCALES).map(([k, v]) => opt(k, v.label))); $('debriefLocale').value = s.debriefLocale;
+  $('debriefModel').value = s.debriefModel;
+  $('theme').replaceChildren(...Object.entries(SCHEMES).map(([k, v]) => opt(k, `${v.label} (${v.note})`))); $('theme').value = applyTheme(s.theme);
   const sel = $('model'); if (![...sel.options].some(o => o.value === s.model)) sel.append(opt(s.model, s.model)); sel.value = s.model;
   await devices(s);
   const t = await db.totals();
@@ -86,6 +91,9 @@ $('loadModels').addEventListener('click', async () => {
 $('model').addEventListener('change', async () => { await setSettings({ model: $('model').value }); saved(); });
 $('language').addEventListener('change', async () => { await setSettings({ language: $('language').value.trim().toLowerCase() }); saved(); });
 $('zdr').addEventListener('change', async () => { await setSettings({ zdr: $('zdr').checked }); saved(); });
+$('debriefLocale').addEventListener('change', async () => { await setSettings({ debriefLocale: $('debriefLocale').value }); saved(); });
+$('debriefModel').addEventListener('change', async () => { await setSettings({ debriefModel: $('debriefModel').value.trim() || 'google/gemini-3.5-flash' }); saved(); });
+$('theme').addEventListener('change', async () => { await setSettings({ theme: applyTheme($('theme').value) }); saved(); });
 $('retention').addEventListener('change', async () => { await setSettings({ retentionDays: Number($('retention').value) }); saved(); });
 
 $('deleteAll').addEventListener('click', async () => {

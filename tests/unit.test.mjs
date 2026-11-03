@@ -7,6 +7,8 @@ import { encodeWav, checkWav, floatToInt16, resample, toBase64, SAMPLE_RATE } fr
 import { Segmenter } from '../extension/lib/vad.js';
 import { classify, backoffMs, parseTranscription } from '../extension/lib/openrouter.js';
 import { linesFromResult, assemble, costOf, isSuspect, similarity, toText, toMarkdown, toJson, clock } from '../extension/lib/transcript.js';
+import { transcriptForPrompt, buildMessages, blocks } from '../extension/lib/debrief.js';
+import { DEBRIEF_PROMPT, LOCALES } from '../extension/lib/prompts.js';
 import { synth } from './helpers/audio.mjs';
 
 const cut = (plan, opts) => { const out = []; const s = new Segmenter(x => out.push(x), opts); const f = synth(plan); for (let i = 0; i < f.length; i += 2048) s.push(f.subarray(i, i + 2048)); s.flush('stop'); return { out, s, total: f.length }; };
@@ -160,4 +162,34 @@ describe('transcript', () => {
     assert.equal(JSON.parse(j).format, 'meetscribe/meeting');
   });
   test('clock', () => { assert.equal(clock(3723000), '01:02:03'); assert.equal(clock(-5), '00:00:00'); });
+});
+
+describe('the debrief, aligned with voicedebrief.ai', () => {
+  const seg = (o) => ({ id: 's1', meetingId: 'm', channel: 'tab', startMs: 0, endMs: 5000, status: 'done', ...o });
+  const items = () => assemble([seg(), seg({ id: 's9', status: 'failed', startMs: 60000 })], [
+    ...linesFromResult(seg(), { text: 'We ship on Friday', segments: null }, 'm'),
+    ...linesFromResult(seg({ id: 's2', channel: 'mic', startMs: 100, endMs: 4000 }), { text: 'we ship on friday', segments: null }, 'm'),
+    ...linesFromResult(seg({ id: 's3', channel: 'mic', startMs: 30000, endMs: 32000 }), { text: 'I will write the notes', segments: null }, 'm')]);
+  test('the model reads the transcript with times and labels; echoes are left out, gaps are named', () => {
+    const t = transcriptForPrompt(items());
+    assert.equal(t, '[00:00:00] Meeting: We ship on Friday\n[00:00:30] You: I will write the notes\n[00:01:00] Meeting: (not transcribed: failed)');
+  });
+  test('the prompt keeps voicedebrief.ai\'s sections and fills the reader\'s language and tone', () => {
+    for (const h of ['## Key points', '## Actions', '## In one sentence', '## Decisions', '## Open questions']) assert.ok(DEBRIEF_PROMPT.includes(h), h);
+    const [sys, user] = buildMessages(items(), 'pt-pt');
+    assert.match(sys.content, /Write the whole debrief in Portuguese \(Portugal\)/);
+    assert.ok(sys.content.includes(LOCALES['pt-pt'].tone));
+    assert.doesNotMatch(sys.content, /\{\{/);
+    assert.match(user.content, /^Transcript:/);
+    assert.match(buildMessages(items(), 'xx').at(0).content, /in English\*\*/, 'an unknown locale falls back to en-gb');
+  });
+  test('the debrief renders as blocks of text, never as HTML', () => {
+    assert.deepEqual(blocks('## Key points\n- a **b** <img src=x>\n\nplain'), [{ type: 'h', text: 'Key points' }, { type: 'li', text: 'a b <img src=x>' }, { type: 'p', text: 'plain' }]);
+  });
+  test('the Markdown export carries the debrief above the transcript, with the model caveat', () => {
+    const md = toMarkdown({ title: 'T', startedAt: 'x', model: 'm', debrief: { markdown: '## Key points\n- a', model: 'g', generatedAt: 'y' } }, items());
+    assert.ok(md.indexOf('## Debrief') < md.indexOf('## Transcript'));
+    assert.match(md, /### Key points/);
+    assert.match(md, /Written by a model, not a stenographer/);
+  });
 });

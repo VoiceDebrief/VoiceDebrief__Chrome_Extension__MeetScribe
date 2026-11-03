@@ -88,7 +88,8 @@ export function toMarkdown(meeting, items, cost) {
   if (meeting.endedAt) md.push(`- Ended: ${meeting.endedAt}`);
   md.push(`- Transcription model: \`${meeting.model}\``);
   if (cost) md.push(`- Cost reported by OpenRouter: $${cost.usd.toFixed(4)} over ${cost.requests} requests` + (cost.unknown ? ` (${cost.unknown} did not report a cost)` : ''));
-  md.push('', '## Transcript', '');
+  if (meeting.debrief) md.push('', '## Debrief', '', `*Written by \`${meeting.debrief.model}\` on ${meeting.debrief.generatedAt}. A model's reading of the transcript below.*`, '', meeting.debrief.markdown.replace(/^## /gm, '### '));
+  md.push('', '## Transcript', '', '*Written by a model, not a stenographer. It can mishear, and it can add words nobody said. Check anything that matters against the audio.*', '');
   for (const i of items) md.push(i.type === 'line' ? `**[${stamp(i)}] ${i.label}:** ${i.text}${flagText(i)}  ` : `*[${stamp(i)}] ${i.label}: ${gapText(i)}*  `);
   return md.join('\n') + '\n';
 }

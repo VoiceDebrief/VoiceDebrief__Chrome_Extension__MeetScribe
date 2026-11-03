@@ -1,0 +1,11 @@
+{
+  "source": "shaped from OpenRouter's chat completions response (choices[0].message.content, usage.cost); content written for the test; not recorded",
+  "status": 200,
+  "headers": {},
+  "body": {
+    "id": "gen-fixture-debrief",
+    "model": "google/gemini-3.5-flash",
+    "choices": [{ "index": 0, "message": { "role": "assistant", "content": "## Key points\n- The project scope needs agreeing [00:00:00]\n- A first draft will be prepared [00:00:03]\n\n## Decisions\n- none recorded\n\n## Actions\n- [unassigned] prepare the first draft [00:00:03]\n\n## Open questions\n- none\n\n## In one sentence\nThe meeting agreed to draft the project scope." }, "finish_reason": "stop" }],
+    "usage": { "prompt_tokens": 412, "completion_tokens": 88, "total_tokens": 500, "cost": 0.00031 }
+  }
+}

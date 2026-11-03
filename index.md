@@ -2,7 +2,11 @@
 
 A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Your words are labelled **You**, everyone else's **Meeting**, and every point in the notes links back to the lines it came from.
 
-> **Status, 3 November 2026: v0.2.0, the first MVP, loads unpacked from a clone.** [Install and use it](install/index.md). It captures the meeting and, if you opt in, your microphone; cuts both at pauses; checks and stores every segment before sending it to OpenRouter; and shows the transcript live in Chrome's side panel, with exports. It has been tested in Chromium with fake audio and replayed responses (38 tests), **not yet on a real Meet call**. [What is built](built/index.md) is the honest list; notes and summaries are next.
+> **Status, 3 November 2026: v0.3.0, the first MVP, loads unpacked from a clone.** [Install and use it](install/index.md); [build and test it](develop/index.md). It is a VoiceDebrief product: [voicedebrief.ai](https://voicedebrief.ai)'s transcript and debrief, for the Meet call you are in ([how the two line up](voicedebrief/index.md)).
+>
+> It captures the meeting and, if you opt in, your microphone, and cuts both at pauses. It checks and stores every segment before sending it to OpenRouter, and shows the transcript live in Chrome's side panel. After the meeting it writes the debrief in your language. It has exports.
+>
+> It has been tested in Chromium with fake audio and replayed responses (44 tests), **not yet on a real Meet call**. [What is built](built/index.md) is the honest list.
 
 ## The one rule
 
@@ -25,7 +29,9 @@ The [review](review/index.md) has all 23 findings, the 14 claims that held, and 
 
 ## Read
 
-- [Install and use v0.2.0](install/index.md): load unpacked, set the key, transcribe a call; how to answer the spike questions with it.
+- [Install and use v0.3.0](install/index.md): load unpacked, set the key, transcribe a call, write the debrief; a short script for the first real test.
+- [Build, test and release](develop/index.md): no compile step; stamping, the tests, the gate, the site, the release and what CI does.
+- [MeetScribe and VoiceDebrief](voicedebrief/index.md): what it shares with voicedebrief.ai, what differs, and the path into the website.
 - [What is built](built/index.md): the reality file, with what building it corrected.
 - [Review of brief v1.0](review/index.md): what holds, what is wrong, what is missing, what to change, with evidence.
 - [Brief v2.0](brief/index.md): the specification to build from.
@@ -36,4 +42,4 @@ The [review](review/index.md) has all 23 findings, the 14 claims that held, and 
 
 ## Where it comes from
 
-MeetScribe is the Chrome extension the [VoiceDebrief](https://voicedebrief.ai) brief deliberately left for later: the same bring-your-own-key OpenRouter model, the same rule that the transcript is never overwritten, and the lessons of its issue queue. It is built the way the [chrome-extensions.sgit.ai](https://chrome-extensions.sgit.ai) hub and [Fix the Page](https://fix-the-page.chrome-extension.sgit.ai) say extensions should be: a deliberately stupid recorder first, `null` never `0`, no remote code, and a release you can check against its source.
+MeetScribe is a VoiceDebrief product, and the Chrome extension the [VoiceDebrief](https://voicedebrief.ai) brief deliberately left for later: the same bring-your-own-key OpenRouter model, the same rule that the transcript is never overwritten, and the lessons of its issue queue. It is built the way the [chrome-extensions.sgit.ai](https://chrome-extensions.sgit.ai) hub and [Fix the Page](https://fix-the-page.chrome-extension.sgit.ai) say extensions should be: a deliberately stupid recorder first, `null` never `0`, no remote code, and a release you can check against its source.

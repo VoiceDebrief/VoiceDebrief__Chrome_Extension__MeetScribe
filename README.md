@@ -1,8 +1,8 @@
-# MeetScribe
+# VoiceDebrief MeetScribe
 
-A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours.
+A [VoiceDebrief](https://voicedebrief.ai) product: a Chrome extension that transcribes the Google Meet call you are in, and writes the debrief, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours.
 
-**Status (3 November 2026): v0.2.0, the first MVP.** `extension/` is the extension, loaded unpacked; the rest is its site (the review of the first brief, brief v2.0, the plan, install and reality pages). Tested in Chromium with fake audio and replayed OpenRouter responses; not yet on a real Meet call.
+**Status (3 November 2026): v0.3.0, the first MVP.** `extension/` is the extension, loaded unpacked; the rest is its site (the review of the first brief, brief v2.0, the plan, install and reality pages). Tested in Chromium with fake audio and replayed OpenRouter responses; not yet on a real Meet call.
 
 ## Run it
 
@@ -17,6 +17,8 @@ A Chrome extension that transcribes the Google Meet call you are in, on your own
 | [`index.md`](index.md) | What it is, the one rule, is it feasible |
 | [`install/index.md`](install/index.md) | Install and use v0.2.0; the spike questions it answers |
 | [`built/index.md`](built/index.md) | What is built, how it is tested, what building it corrected |
+| [`develop/index.md`](develop/index.md) | Build, test and release; what CI does |
+| [`voicedebrief/index.md`](voicedebrief/index.md) | How MeetScribe lines up with voicedebrief.ai, and the path into it |
 | [`review/index.md`](review/index.md) | Review of brief v1.0 (ChatGPT draft): 14 claims that hold, 23 findings R1 to R23 |
 | [`brief/index.md`](brief/index.md) | **Brief v2.0**, the specification to build from |
 | [`plan/index.md`](plan/index.md) | Phase 0 spike (eight go/no-go questions, model bake-off), then three releases |
@@ -28,18 +30,37 @@ A Chrome extension that transcribes the Google Meet call you are in, on your own
 
 ```
 extension/                 the extension: manifest.json, service-worker.js, offscreen.*, worklet.js, sidepanel.*, options.*, meetings.*, ui.css, build.js, icons/
-extension/lib/             wav, vad (cuts at pauses), openrouter, queue (leases, retries), transcript (lines, gaps, flags, exports), db (IndexedDB), settings
+extension/lib/             wav, vad (cuts at pauses), openrouter, queue (leases, retries), transcript (lines, gaps, flags, exports), debrief + prompts (VoiceDebrief's prompt and locales), theme, db (IndexedDB), settings
 tests/                     unit.test.mjs (Node), extension.test.mjs (Chromium), helpers/ (replay server, synthetic audio), fixtures/openrouter/, run.mjs
 admin/build/               version.txt (owns the version) · validate.mjs (the gate) · build.mjs (site) · package.mjs (stamp, test build) · icons.mjs · screenshots.mjs · snapshot-models.mjs
 .github/workflows/         deploy-pages.yml: validate, test, tag, deploy on every push to dev
 ```
 
-## Test
+## Build
 
+There is no compile step: Chrome loads `extension/` as it is. Node 20+ runs the rest, with no dependencies except Playwright for the tests. [`develop/index.md`](develop/index.md) has it in full.
+
+```bash
+node admin/build/package.mjs
 ```
-npm install --no-save playwright@1.63.0 && npx playwright install chromium
-npm test                                 # tests/run.mjs: builds the TEST extension, runs every test file, fails if one ran no tests
+
+```bash
+node admin/build/build.mjs
 ```
+
+```bash
+npm install --no-save --no-package-lock playwright@1.63.0 && npx playwright install chromium
+```
+
+```bash
+node tests/run.mjs
+```
+
+```bash
+node admin/build/validate.mjs
+```
+
+That is: stamp `extension/build.js` (version, commit, time); regenerate the site's HTML from its markdown; install Playwright (once); run the tests (unit in Node, the extension in Chromium); run the gate CI runs first.
 
 ## Release
 

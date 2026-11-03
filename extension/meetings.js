@@ -3,11 +3,18 @@
 import * as db from './lib/db.js';
 import { assemble, costOf, clock, toText, toMarkdown, toJson } from './lib/transcript.js';
 import { drain } from './lib/queue.js';
+import { buildMessages, blocks } from './lib/debrief.js';
+import { chat, API_BASE } from './lib/openrouter.js';
+import { LOCALES } from './lib/prompts.js';
+import { getSettings } from './lib/settings.js';
+import { applyTheme } from './lib/theme.js';
 import { BUILD } from './build.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 $('ver').textContent = 'v' + BUILD.version + (BUILD.test ? ' TEST' : '');
+getSettings().then(s => applyTheme(s.theme));
+let writing = false;
 let current = new URLSearchParams(location.search).get('id');
 let player = null;
 
@@ -54,6 +61,7 @@ async function render() {
     ['Flags', `${items.filter(i => i.flags?.includes('suspect')).length} suspect line(s), ${echoes} probable echo(es)`],
   ];
   if (meeting.micError) rows.push(['Microphone', meeting.micError]);
+  renderDebrief(meeting);
   $('meta').replaceChildren(...rows.flatMap(([k, v]) => [el('span', 'k', k), el('span', null, v)]));
   $('lines').replaceChildren(...items.map(i => {
     const li = el('li', i.type === 'gap' ? 'gap' : (i.flags.length ? 'dimmed' : ''));
@@ -64,6 +72,38 @@ async function render() {
     return li;
   }));
 }
+
+function renderDebrief(meeting) {
+  const d = meeting.debrief;
+  $('debriefBox').hidden = !d && !writing;
+  $('debrief').textContent = writing ? 'Writing the debrief…' : d ? 'Rewrite the debrief' : 'Write the debrief';
+  $('debrief').disabled = writing;
+  if (!d) { $('debriefBody').replaceChildren(); $('debriefMeta').textContent = writing ? 'Writing…' : ''; return; }
+  $('debriefMeta').textContent = `Written ${d.generatedAt.slice(0, 16).replace('T', ' ')} by ${d.model}, in ${(LOCALES[d.locale] || {}).label || d.locale}` +
+    (d.costUsd === null ? '; OpenRouter did not report the cost.' : `; $${d.costUsd.toFixed(4)} reported by OpenRouter.`) + ' The transcript below is unchanged.';
+  const nodes = []; let ul = null;
+  for (const b of blocks(d.markdown)) {
+    if (b.type === 'li') { if (!ul) { ul = el('ul'); nodes.push(ul); } ul.append(el('li', null, b.text)); continue; }
+    ul = null; nodes.push(el(b.type === 'h' ? 'h3' : 'p', null, b.text));
+  }
+  $('debriefBody').replaceChildren(...nodes);
+}
+
+async function writeDebrief() {
+  const s = await getSettings();
+  if (!s.apiKey) return say('Set your OpenRouter key on the options page first.');
+  const { items } = await data();
+  if (!items.some(i => i.type === 'line')) return say('Nothing transcribed yet: there is nothing to debrief.');
+  writing = true; say(''); render();
+  try {
+    const r = await chat({ apiBase: BUILD.test && s.apiBase ? s.apiBase : API_BASE, key: s.apiKey, model: s.debriefModel, messages: buildMessages(items, s.debriefLocale), zdr: s.zdr });
+    await db.updateMeeting(current, { debrief: { markdown: r.text, model: r.model, locale: s.debriefLocale, generatedAt: new Date().toISOString(), costUsd: r.cost, generationId: r.generationId } });
+    say('');
+  } catch (e) {
+    say(e.status === 401 || e.status === 403 ? 'OpenRouter rejected the key.' : e.status === 402 ? 'The OpenRouter key is out of credit.' : 'The debrief failed: ' + e.message + '. The transcript is untouched.');
+  } finally { writing = false; render(); }
+}
+$('debrief').addEventListener('click', writeDebrief);
 
 function download(name, text, type) {
   const a = document.createElement('a');

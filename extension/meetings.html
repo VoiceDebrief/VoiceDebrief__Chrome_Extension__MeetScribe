@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en-GB">
-<head><meta charset="utf-8"><title>MeetScribe meetings</title><link rel="stylesheet" href="ui.css">
+<head><meta charset="utf-8"><title>MeetScribe meetings</title><link rel="stylesheet" href="vd-tokens.css"><link rel="stylesheet" href="ui.css">
 <style>
   .cols{display:grid;grid-template-columns:280px 1fr;gap:1rem;max-width:1200px;margin:0 auto}
   @media (max-width:800px){.cols{grid-template-columns:1fr}}
@@ -12,7 +12,7 @@
   .meta .k{color:var(--dim)}
 </style></head>
 <body>
-<header class="bar"><span class="brand">meet<span>scribe</span></span><span class="ver" id="ver"></span><nav><a href="options.html">Options</a></nav></header>
+<header class="bar"><span class="brand">Voice<em>Debrief</em> <b>MeetScribe</b></span><span class="beta">BETA</span><span class="ver" id="ver"></span><nav><a href="options.html">Options</a></nav></header>
 <main class="cols">
   <section class="box"><h2>Meetings</h2><ul class="list" id="list"></ul><p class="small dim" id="none" hidden>No meetings yet. Open the side panel on a Meet tab to start.</p></section>
   <section class="box" id="detail" hidden>
@@ -20,8 +20,15 @@
     <div class="meta" id="meta"></div>
     <div class="row" style="margin-top:.6rem">
       <button id="exTxt">Export TXT</button><button id="exMd">Export Markdown</button><button id="exJson">Export JSON</button>
-      <button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg"></span>
+      <button class="primary" id="debrief">Write the debrief</button><button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg"></span>
     </div>
+    <section id="debriefBox" class="debrief" hidden>
+      <h2 style="margin-top:1rem">Debrief</h2>
+      <p class="small dim" id="debriefMeta"></p>
+      <div id="debriefBody"></div>
+    </section>
+    <h2 style="margin-top:1rem">Transcript</h2>
+    <p class="caveat">Written by a model, not a stenographer. It can mishear, and it can add words nobody said. Check anything that matters against the audio.</p>
     <ol class="lines" id="lines" style="margin-top:.6rem"></ol>
   </section>
 </main>

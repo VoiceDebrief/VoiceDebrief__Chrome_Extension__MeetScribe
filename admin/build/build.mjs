@@ -17,8 +17,12 @@ const PAGES = [
     description: 'A Chrome extension that transcribes Google Meet calls through OpenRouter, without a bot, Google recording or a server: the review of the first brief, brief v2.0 and the plan.' },
   { path: 'install',   nav: 'Install',   title: 'Install and use MeetScribe',
     description: 'Load MeetScribe unpacked from a clone, set the OpenRouter key and microphone, and transcribe a Meet call; with screenshots and how to answer the spike questions.' },
+  { path: 'develop',   nav: 'Build',     title: 'Build, test and release MeetScribe',
+    description: 'There is no compile step: load extension/ unpacked. How to stamp it, run the tests and the gate, regenerate the site, and release to dev, where CI validates, tests, tags and deploys.' },
   { path: 'built',     nav: 'Built',     title: 'What is built in MeetScribe',
     description: 'The reality file: what exists in the extension, how it is tested, what is not built yet, and what building it corrected in the brief.' },
+  { path: 'voicedebrief', nav: 'VoiceDebrief', title: 'MeetScribe and VoiceDebrief',
+    description: 'How MeetScribe lines up with voicedebrief.ai: the same key, the same words about where audio goes, the same artefacts and colours, and the path for its code into the website.' },
   { path: 'review',    nav: 'Review',    title: 'Review of the MeetScribe brief v1.0',
     description: 'The ChatGPT-drafted MeetScribe brief checked claim by claim: 14 facts that hold, 6 choices that fail silently, 11 gaps, 6 changes, with evidence.' },
   { path: 'brief',     nav: 'Brief v2.0', title: 'MeetScribe brief v2.0',
@@ -166,18 +170,20 @@ function frame(page, body) {
 <title>${esc(page.title)}</title>
 <meta name="description" content="${esc(page.description)}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="MeetScribe">
+<meta property="og:site_name" content="VoiceDebrief MeetScribe">
 <meta property="og:title" content="${esc(page.title)}">
 <meta property="og:description" content="${esc(page.description)}">
 <link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="${up}assets/vd-tokens.css">
 <link rel="stylesheet" href="${up}assets/site.css">
 </head>
 <body>
 
 <nav class="site"><div class="row">
-  <a class="brand" href="${up}index.html">meetscribe<span>.chrome-extension</span></a>
-  <span class="stage-pill">first MVP · not yet tried on a real call</span>
+  <a class="brand" href="${up}index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
+  <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
+  <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
   <a class="ver" href="${up}versions/index.html" title="Release history">${esc(VERSION)}</a>
 ${nav}
   <a class="gh" href="${REPO}">&#9733; GitHub</a>
@@ -189,15 +195,17 @@ ${crumb}${body}
 
 <footer class="site"><div class="cols">
   <div>
-    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
-    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. First MVP, loaded unpacked. Content CC BY 4.0; code Apache 2.0.</p>
-    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
+    <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
     <p class="verline">site ${esc(VERSION)} · <a href="index.md">this page as markdown</a> · <a href="${up}llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>
     <a href="${up}install/index.html">Install and use</a>
+    <a href="${up}develop/index.html">Build and test</a>
     <a href="${up}built/index.html">What is built</a>
+    <a href="${up}voicedebrief/index.html">Part of VoiceDebrief</a>
     <a href="${up}review/index.html">Review of v1.0</a>
     <a href="${up}brief/index.html">Brief v2.0</a>
     <a href="${up}plan/index.html">Plan</a>
@@ -212,8 +220,9 @@ ${crumb}${body}
     <a href="${REPO}">GitHub</a>
   </div>
   <div>
-    <h4>Family</h4>
+    <h4>VoiceDebrief</h4>
     <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://voicedebrief.ai/openrouter-key/">Get an OpenRouter key</a>
     <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
     <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
     <a href="https://sgit.ai">sgit.ai</a>

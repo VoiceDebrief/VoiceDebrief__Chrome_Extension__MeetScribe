@@ -13,6 +13,9 @@ export const DEFAULTS = {
   retentionDays: 7,                    // audio of transcribed segments; -1 keeps it
   noVerbose: {},                       // models that rejected verbose_json: { [model]: true }
   consentAcknowledged: false,
+  theme: 'signal',                     // one of VoiceDebrief's five schemes (lib/theme.js)
+  debriefModel: 'google/gemini-3.5-flash',   // the model voicedebrief.ai writes its summary with
+  debriefLocale: 'en-gb',              // the reader's language and tone, as voicedebrief.ai's locales
   apiBase: API_BASE,                   // honoured only in the TEST build (its CSP is the only one that allows another host)
 };
 

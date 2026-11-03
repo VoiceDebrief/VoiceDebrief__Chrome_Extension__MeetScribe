@@ -212,6 +212,46 @@ describe('MeetScribe in Chromium', () => {
     await page.close();
   });
 
+  test('7: the debrief is written from the transcript in the chosen language, shown, and leaves the transcript as it was', async () => {
+    await meeting('m-debrief', { title: 'Debrief test' });
+    await queueSegment('m-debrief', 0);
+    await ev(() => ms.drain('t', { meetingId: 'm-debrief', untilEmpty: true }));
+    await settings({ debriefLocale: 'pt-pt', debriefModel: 'google/gemini-3.5-flash' });
+    const linesBefore = await ev(() => ms.db.linesFor('m-debrief'));
+    replay.state.chats.length = 0;
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extId}/meetings.html?id=m-debrief`);
+    await page.click('#debrief');
+    await page.waitForSelector('#debriefBody h3', { timeout: 10000 });
+    assert.equal(replay.state.chats.length, 1);
+    assert.equal(replay.state.chats[0].model, 'google/gemini-3.5-flash'); assert.equal(replay.state.chats[0].zdr, true);
+    assert.match(replay.state.chats[0].system, /Portuguese \(Portugal\)/);
+    assert.match(replay.state.chats[0].user, /Meeting: We need to agree on the project scope\./);
+    assert.match(await page.textContent('#debriefBody'), /prepare the first draft/);
+    assert.match(await page.textContent('#debriefMeta'), /\$0\.0003 reported/);
+    assert.equal(await page.locator('#debriefBody script, #debriefBody img').count(), 0);
+    assert.deepEqual(await ev(() => ms.db.linesFor('m-debrief')), linesBefore, 'the transcript is unchanged');
+    const m = await ev(() => ms.db.getMeeting('m-debrief'));
+    assert.equal(m.debrief.locale, 'pt-pt'); assert.equal(m.debrief.costUsd, 0.00031);
+    await page.close();
+    await settings({ debriefLocale: 'en-gb' });
+  });
+
+  test('VoiceDebrief alignment: the pages carry its colour schemes and brand, and a stored scheme outside the five falls back to Signal', async () => {
+    const page = await context.newPage();
+    await settings({ theme: 'night' });
+    await page.goto(`chrome-extension://${extId}/options.html`);
+    await page.waitForFunction(() => document.documentElement.dataset.vdTheme === 'night');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(8, 19, 31)');
+    assert.match(await page.textContent('header.bar'), /VoiceDebrief\s*MeetScribe\s*BETA/);
+    assert.match(await page.textContent('body'), /We do not know which provider handles your recording/);
+    await settings({ theme: '"><script>' });
+    await page.reload();
+    await page.waitForFunction(() => document.documentElement.dataset.vdTheme === 'signal');
+    await settings({ theme: 'signal' });
+    await page.close();
+  });
+
   test('A12: delete all leaves no meeting, segment, audio or line', async () => {
     await ev(() => ms.db.deleteAll());
     assert.deepEqual(await ev(() => ms.db.totals()), { meetings: 0, segments: 0, wavs: 0, lines: 0 });

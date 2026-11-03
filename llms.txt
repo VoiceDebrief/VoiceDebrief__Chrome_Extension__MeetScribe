@@ -1,12 +1,14 @@
-# MeetScribe
+# VoiceDebrief MeetScribe
 
-> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Status on 3 November 2026: v0.2.0, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
+> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. A VoiceDebrief product (https://voicedebrief.ai): its transcript and debrief, for a meeting. Status on 3 November 2026: v0.3.0, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
 
-Site and extension v0.2.0 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. Paths are relative to this file, because the site's domain is not decided yet.
+Site and extension v0.3.0 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. Paths are relative to this file, because the site's domain is not decided yet.
 
 ## Read first
 
 - [Install and use](install/index.md): load extension/ unpacked, the OpenRouter key, the microphone grant, a meeting, the meetings page; the spike questions this build answers.
+- [Build, test and release](develop/index.md): NO COMPILE STEP; Chrome loads extension/ as it is. Node 20+ scripts: admin/build/package.mjs (stamp), build.mjs (site), validate.mjs (the gate); tests/run.mjs (Playwright 1.63.0). CI on dev: validate, test, tag vX.Y.Z, deploy.
+- [MeetScribe and VoiceDebrief](voicedebrief/index.md): shared key guidance, the routingHonest and modelCaveat sentences, vd-tokens.css colour (vendored), the debrief prompt and four locales, gemini-3.5-flash for the debrief; what differs; the path into voicedebrief.ai.
 - [What is built](built/index.md): the reality file. If it is not listed there as built, it does not exist.
 - [Home](index.md): what MeetScribe is, the one rule, whether it is feasible, the four findings that matter most.
 - [Review of brief v1.0](review/index.md): 14 claims that hold (with evidence), 6 choices that fail silently (R1 to R6), 11 gaps (R7 to R17), 6 changes (R18 to R23), and a verdict per section.
@@ -31,3 +33,4 @@ Site and extension v0.2.0 (one version, admin/build/version.txt; every push to d
 - Family: https://voicedebrief.ai (the product family), https://chrome-extensions.sgit.ai (how extensions are built here), https://fix-the-page.chrome-extension.sgit.ai (the sibling extension).
 - Code: extension/lib/{wav,vad,openrouter,queue,transcript,db,settings}.js are plain ES modules with no chrome.* except db (IndexedDB) and settings; tests/unit.test.mjs runs them in Node. tests/extension.test.mjs loads a TEST build in Chromium with a fake audio device and tests/helpers/replay.mjs as OpenRouter.
 - An offscreen document has chrome.runtime only: it reads settings through the service worker (found while building; see built/index.md).
+- The debrief: extension/lib/prompts.js (VoiceDebrief's summary-prompt.md made for a meeting, with its LOCALES), lib/debrief.js; POST /api/v1/chat/completions; stored on the meeting as debrief {markdown, model, locale, generatedAt, costUsd}; the transcript is never changed.

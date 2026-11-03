@@ -4,6 +4,7 @@
 import * as db from './lib/db.js';
 import { assemble, costOf, clock } from './lib/transcript.js';
 import { getSettings } from './lib/settings.js';
+import { applyTheme } from './lib/theme.js';
 import { BUILD } from './build.js';
 
 const $ = (id) => document.getElementById(id);
@@ -121,6 +122,6 @@ chrome.runtime.onMessage.addListener((msg) => {
   $('lvTab').style.width = w(msg.tab); $('lvMic').style.width = w(msg.micMuted ? 0 : msg.mic);
 });
 
-getSettings().then(s => { $('useMic').checked = !!s.micDefault; $('micNote').hidden = !s.micDefault; });
+getSettings().then(s => { applyTheme(s.theme); $('useMic').checked = !!s.micDefault; $('micNote').hidden = !s.micDefault; });
 refresh();
 setInterval(refresh, 1000);

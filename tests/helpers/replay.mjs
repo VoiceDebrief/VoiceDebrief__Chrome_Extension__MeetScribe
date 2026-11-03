@@ -12,7 +12,7 @@ const DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fi
 export const fixture = (name) => JSON.parse(fs.readFileSync(path.join(DIR, name + '.json'), 'utf8'));
 
 export function startReplay() {
-  const state = { requests: [], script: [], fallback: 'transcription-verbose', key: 'key', delayMs: 0 };
+  const state = { requests: [], chats: [], chatScript: [], script: [], fallback: 'transcription-verbose', key: 'key', delayMs: 0 };
   const server = http.createServer((req, res) => {
     const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-expose-headers': 'x-generation-id' };
     if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
@@ -23,8 +23,12 @@ export function startReplay() {
       const send = (f) => { res.writeHead(f.status, { 'content-type': 'application/json', ...cors, ...f.headers }); res.end(JSON.stringify(f.body)); };
       if (url.pathname === '/api/v1/key') return send(fixture(state.key));
       if (url.pathname === '/api/v1/models') return send({ status: 200, headers: {}, body: { data: [{ id: 'openai/whisper-large-v3', name: 'Whisper Large V3', pricing: { prompt: '0.0000075', completion: '0' } }] } });
-      if (url.pathname !== '/api/v1/audio/transcriptions') { res.writeHead(404, cors); return res.end(); }
       let p = {}; try { p = JSON.parse(body); } catch {}
+      if (url.pathname === '/api/v1/chat/completions') {
+        state.chats.push({ model: p.model, zdr: p.provider?.zdr ?? null, system: p.messages?.[0]?.content || '', user: p.messages?.[1]?.content || '' });
+        return send(fixture(state.chatScript.length ? state.chatScript.shift() : 'chat-debrief'));
+      }
+      if (url.pathname !== '/api/v1/audio/transcriptions') { res.writeHead(404, cors); return res.end(); }
       const audio = Buffer.from(p.input_audio?.data || '', 'base64');
       const validWav = audio.length > 44 && audio.toString('ascii', 0, 4) === 'RIFF' && audio.toString('ascii', 8, 12) === 'WAVE' && audio.readUInt32LE(40) === audio.length - 44;
       const name = state.script.length ? state.script.shift() : state.fallback;

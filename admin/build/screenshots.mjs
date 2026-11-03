@@ -36,8 +36,9 @@ await panel.screenshot({ path: path.join(OUT, 'panel-live.png') });
 await sw.evaluate(() => ms.stop());
 for (let i = 0; i < 60 && (await sw.evaluate(() => ms.getSession().then(s => s.state))) !== 'idle'; i++) await new Promise(res => setTimeout(res, 500));
 
-const meetings = await ctx.newPage(); await meetings.setViewportSize({ width: 1200, height: 760 });
+const meetings = await ctx.newPage(); await meetings.setViewportSize({ width: 1200, height: 900 });
 await meetings.goto(url('meetings.html?id=' + r.meetingId)); await meetings.waitForTimeout(1200);
+await meetings.click('#debrief'); await meetings.waitForSelector('#debriefBody h3'); await meetings.waitForTimeout(500);
 await meetings.screenshot({ path: path.join(OUT, 'meetings.png') });
 const options = await ctx.newPage(); await options.setViewportSize({ width: 1000, height: 1100 });
 await options.goto(url('options.html')); await options.waitForTimeout(1000);

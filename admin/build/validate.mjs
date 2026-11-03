@@ -9,6 +9,7 @@
 // 7. one version: admin/build/version.txt, extension/manifest.json and package.json agree; build.js is not a test build
 // 8. the extension's manifest is exactly the planned one (brief v2.0, 9): permissions, the one host, the CSP
 // 9. the extension's code: network only in lib/openrouter.js; no eval, new Function, remote script, innerHTML
+// 10. colour only in vd-tokens.css (VoiceDebrief's rule)
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -100,6 +101,15 @@ for (const f of files.filter(f => rel(f).startsWith('extension/') && /\.(js|html
   if (/\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write/.test(code)) fail(`${r}: HTML built from strings (render with textContent)`);
   if (/<script[^>]+src=["'](https?:)?\/\//i.test(s) || /import\s[^;]*from\s*['"]https?:/.test(code) || /import\(\s*['"]https?:/.test(code)) fail(`${r}: remote code`);
   if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(s) && r.endsWith('.html')) fail(`${r}: inline script (the CSP forbids it)`);
+}
+
+// 10. colour lives in vd-tokens.css only (VoiceDebrief's rule, scripts/check_themes.py there): no hex or rgb()
+//     literal in any other stylesheet or extension page
+for (const f of files.filter(f => /\.(css|html)$/.test(f) && !f.endsWith('vd-tokens.css'))) {
+  const r = rel(f);
+  if (!r.endsWith('.css') && !r.startsWith('extension/')) continue;
+  const m = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').match(/#[0-9a-fA-F]{3,8}\b(?![^<]*>)|rgba?\(/);
+  if (m) fail(`${r}: colour literal ${m[0]} (colour comes from vd-tokens.css)`);
 }
 
 if (fails.length) { console.error(`validate: ${fails.length} failure(s)\n- ${fails.join('\n- ')}`); process.exit(1); }

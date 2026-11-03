@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe and VoiceDebrief</title>
+<meta name="description" content="How MeetScribe lines up with voicedebrief.ai: the same key, the same words about where audio goes, the same artefacts and colours, and the path for its code into the website.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VoiceDebrief MeetScribe">
+<meta property="og:title" content="MeetScribe and VoiceDebrief">
+<meta property="og:description" content="How MeetScribe lines up with voicedebrief.ai: the same key, the same words about where audio goes, the same artefacts and colours, and the path for its code into the website.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/vd-tokens.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
+  <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
+  <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.3.0</a>
+  <a class="nl" href="../install/index.html">Install</a>
+  <a class="nl" href="../develop/index.html">Build</a>
+  <a class="nl" href="../built/index.html">Built</a>
+  <a class="nl here" href="../voicedebrief/index.html">VoiceDebrief</a>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / voicedebrief</div>
+<h1 id="meetscribe-and-voicedebrief">MeetScribe and VoiceDebrief</h1>
+<p>MeetScribe is a VoiceDebrief product: <a href="https://voicedebrief.ai">voicedebrief.ai</a>'s transcript and debrief, for a meeting instead of a voice note. This page says what it shares with the website now, what differs and why, and how its code is meant to move into the website.</p>
+<h2 id="what-is-the-same">What is the same</h2>
+<p>Read from the VoiceDebrief website repository (<code>VoiceDebrief/VoiceDebrief__Website</code>, branch <code>dev</code>, commit <code>30ae8d9</code>) on 3 November 2026.</p>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>voicedebrief.ai</th><th>MeetScribe</th></tr></thead>
+<tbody>
+<tr><td>The key</td><td>Bring your own OpenRouter key, kept in the browser; &quot;we charge nothing and add no margin&quot;; the guide at <a href="https://voicedebrief.ai/openrouter-key/">/openrouter-key/</a> with <em>set a spend limit</em> as the step that matters</td><td>The same, in the same words, linking to the same guide</td></tr>
+<tr><td>Where the audio goes</td><td><code>routingHonest</code>: &quot;Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. Do not use this for anything you would not hand to a third party.&quot;</td><td>The same sentence, unchanged, on the consent step, the options page and the site's footer</td></tr>
+<tr><td>The caveat</td><td><code>modelCaveat</code>, shown with the transcript, never before it</td><td>The same sentence, above every transcript</td></tr>
+<tr><td>The artefacts</td><td>Transcript, then an optional translation, then a summary (&quot;debrief&quot;), then an optional infographic. The transcript is never overwritten (issue 055)</td><td>Transcript, then the debrief. The transcript is never changed; the debrief is a separate document</td></tr>
+<tr><td>The debrief</td><td><code>summary-prompt.md</code>: Key points, Actions, In one sentence; only what is in the transcript; written in the reader's <code>{{language}}</code> with the locale's <code>{{tone}}</code></td><td>The same prompt made for a meeting (<code>extension/lib/prompts.js</code>): the same three sections and rules, plus Decisions, Open questions and a time on every point</td></tr>
+<tr><td>Language and tone</td><td>Four locales: en-gb, en-us, pt-pt, pt-br, each with a language and a tone in <code>culture.json</code></td><td>The same four, with the same values, for the debrief</td></tr>
+<tr><td>The debrief model</td><td><code>google/gemini-3.5-flash</code> (the declared workflow's summary step)</td><td>The same default, changeable on the options page</td></tr>
+<tr><td>Colour</td><td><code>vd-tokens.css</code>: five schemes (Signal, Night, Paper, Blueprint, Ember), and no colour written anywhere else</td><td>The same file, vendored unchanged (<code>admin/build/vendor-vd.mjs</code>), in the site and the extension; the same five schemes to choose from; the gate refuses a colour outside it</td></tr>
+<tr><td>Brand</td><td>Voice*Debrief*, with BETA as permanent chrome</td><td>Voice*Debrief* MeetScribe, with BETA, in the site and in every extension page</td></tr>
+<tr><td>Cost</td><td>Read back from OpenRouter, &quot;unknown&quot; never zero</td><td><code>usage.cost</code> as reported; a missing cost is counted, never zero</td></tr>
+<tr><td>Stack</td><td>Static, vanilla JS, web components, no framework, no build step</td><td>Static, vanilla JS modules, no framework, no build step, no dependencies</td></tr>
+</tbody></table></div>
+<h2 id="what-differs-and-why">What differs, and why</h2>
+<ul>
+<li><strong>How the audio is transcribed.</strong> voicedebrief.ai sends a whole voice note to a chat model (<code>google/gemini-3.5-flash</code>) as audio input. MeetScribe sends 8 to 30 second segments to OpenRouter's speech-to-text endpoint, because a meeting is long, arrives live, and must not be lost if one request fails. The model is chosen in the Phase 0 bake-off; Gemini through the chat route is one of the candidates worth adding to it.</li>
+<li><strong>Speakers.</strong> A voice note has one speaker. A meeting has <strong>You</strong> (your microphone) and <strong>Meeting</strong> (the call). Nothing more is claimed.</li>
+<li><strong>No infographic yet.</strong> It is an optional step on the website; it can follow the same way.</li>
+<li><strong>No translation step yet.</strong> The debrief is written in the reader's language directly, as voicedebrief.ai's prompt also instructs. A separate translation of the transcript, as the website does, is the next step if it is wanted.</li>
+<li><strong>Where the key is kept.</strong> In the extension's storage, not the website's <code>localStorage</code>: the two are different origins and cannot share it. The same key works in both.</li>
+</ul>
+<h2 id="the-path-into-voicedebrief-ai">The path into voicedebrief.ai</h2>
+<p>The extension is the only way to capture a Meet tab's audio without a prompt each time, so the extension stays. What moves is everything after the capture:</p>
+<ol>
+<li><strong>The pure modules</strong> in <code>extension/lib/</code> (<code>wav</code>, <code>vad</code>, <code>openrouter</code>, <code>queue</code>, <code>transcript</code>, <code>debrief</code>, <code>prompts</code>) use no extension API except <code>db</code> and <code>settings</code>. They can be served by the website as they are, as versioned, immutable files, which is how it publishes its components.</li>
+<li><strong>A meetings page on voicedebrief.ai</strong> can read an exported meeting (the JSON export, <code>meetscribe/meeting</code> version 1) and offer the website's own steps on it: translation, the debrief, the infographic, the chat.</li>
+<li><strong>A web-only capture</strong> is possible too: a page can capture a tab's audio with <code>getDisplayMedia</code>, after the user picks the tab in Chrome's dialog. It is one more click per meeting and no install, and could live at <code>voicedebrief.ai/tools/</code> with the same modules. This is <span class="chip chip-proposed">proposed</span>, not built.</li>
+</ol>
+<p>When the website adopts any of these, it takes the files at a version, and this repository's tests stay the gate for them.</p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
+    <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
+    <p class="verline">site v0.3.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../install/index.html">Install and use</a>
+    <a href="../develop/index.html">Build and test</a>
+    <a href="../built/index.html">What is built</a>
+    <a href="../voicedebrief/index.html">Part of VoiceDebrief</a>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../versions/index.html">Release history</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>VoiceDebrief</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://voicedebrief.ai/openrouter-key/">Get an OpenRouter key</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

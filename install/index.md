@@ -1,6 +1,6 @@
-# Install and use MeetScribe v0.2.0
+# Install and use MeetScribe v0.3.0
 
-The first MVP, loaded unpacked from a clone of the repository. No Chrome Web Store, no zip: Chrome runs the files in `extension/` as they are in the repository.
+The first MVP, loaded unpacked from a clone of the repository. No Chrome Web Store, no zip, no compile step: Chrome runs the files in `extension/` as they are in the repository. [Build, test and release](../develop/index.md) has the developer's side.
 
 ## Install
 
@@ -19,6 +19,7 @@ After a `git pull`, press the reload arrow on MeetScribe's card in `chrome://ext
 2. **Microphone.** Press **Allow the microphone** only if you want your own voice transcribed. Chrome asks here because the capture page is never shown and cannot ask.
 3. **Where you hear the meeting.** Pick the headset or speakers you use for Meet, and press **Play a test tone**.
 4. **Model.** **Load the live list** shows every OpenRouter transcription model with its listed price per hour. `openai/whisper-large-v3` is the starting point until the Phase 0 bake-off picks a default.
+5. **The debrief.** Pick the language it is written in (voicedebrief.ai's four: English UK or US, Portuguese Portugal or Brazil). The model defaults to `google/gemini-3.5-flash`, as on voicedebrief.ai.
 
 ## Use it in a meeting
 
@@ -34,9 +35,17 @@ After a `git pull`, press the reload arrow on MeetScribe's card in `chrome://ext
 
 ## Afterwards
 
-**Meetings** (in the panel's header) lists every meeting. You can read the transcript with its gaps, play the audio any line came from (▶), retry failed segments, export TXT, Markdown or JSON, and delete a meeting. **Delete all MeetScribe data** is on the options page.
+**Meetings** (in the panel's header) lists every meeting. You can:
 
-![A meeting (test build, fake audio: the same audio on both channels, so every "You" line is a probable echo)](images/meetings.png)
+- press **Write the debrief** for voicedebrief.ai's debrief of the meeting (key points, decisions, actions, open questions, one sentence), each point with the time of the line it came from. The transcript is never changed.
+- read the transcript with its gaps, and play the audio any line came from (▶).
+- retry failed segments.
+- export TXT, Markdown (with the debrief) or JSON.
+- delete a meeting.
+
+**Delete all MeetScribe data** is on the options page.
+
+![A meeting with its debrief (test build: fake audio, and replayed responses. The same audio is on both channels, so every "You" line is a probable echo)](images/meetings.png)
 
 ## What this build answers for the Phase 0 spike
 
@@ -53,13 +62,14 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 | S7 | Is the mic captured while muted in Meet? | Mute in Meet only and speak: a **You** line appears (expected: yes) |
 | S8 | Does the meeting stay on your headset? | Pick it in options; listen when you press Start |
 
-## For developers
+## Testing it tomorrow: a short script
 
-```
-npm test                              # unit tests in Node + the extension in Chromium (needs Playwright with Chromium)
-node admin/build/package.mjs          # stamp extension/build.js (version, commit, time)
-node admin/build/validate.mjs         # the gate: site, manifest, code rules, versions
-node admin/build/screenshots.mjs      # the screenshots on this page, from the test build
-```
+1. Pull `dev`, reload the extension, and check the options page's footer shows **0.3.0**.
+2. Make or reuse a capped OpenRouter key; **Test the key**.
+3. A two-person Meet call, headphones on, microphone **on**. Talk for five minutes, with one stretch muted in Meet only (S7).
+4. Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).
+5. **Write the debrief**; check every point against the line its time names.
+6. Again on laptop speakers, to count the `probable-echo` lines (S3).
+7. Export Markdown and JSON, and keep them with your notes for the spike page.
 
-Playwright: `npm install --no-save playwright@1.63.0 && npx playwright install chromium`. The tests load a TEST build (`tests/.build/extension-test`). It is marked in its name, and its CSP also allows `127.0.0.1`, where a local server replays OpenRouter responses. Chromium's fake audio device plays a WAV with a known shape of speech and pauses.
+The developer's side (stamping, tests, the gate, release) is on [Build, test and release](../develop/index.md).
