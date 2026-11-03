@@ -70,12 +70,14 @@ That is: stamp `extension/build.js` (version, commit, time); regenerate the site
 
 ## Release
 
-1. Bump `admin/build/version.txt` once; set `extension/manifest.json` and `package.json` to match.
+A push to `dev` is a **minor** release (`v0.3.1` → `v0.3.2`); only a push to `main` is a **major** one (`v0.3.x` → `v0.4.0`). CI refuses any other number.
+
+1. Set `admin/build/version.txt` to the next minor; set `extension/manifest.json` and `package.json` to match.
 2. `node admin/build/package.mjs` (stamps `extension/build.js` and builds the release zip), `node admin/build/build.mjs`, `npm test`, `node admin/build/validate.mjs`.
 3. Add a row to `versions/index.md`.
 4. Commit with the subject `site vX.Y.Z: what changed` and push to `dev`.
 
-Every push to `dev` runs `.github/workflows/deploy-pages.yml`: validate, test, tag `vX.Y.Z` on the release commit (checked against `version.txt` and the commit subject; the next minor, or a deliberate major), then deploy the site to GitHub Pages. A pull request runs validate and test only.
+Every push to `dev` or `main` runs `.github/workflows/deploy-pages.yml`: validate, test, tag `vX.Y.Z` on the release commit (checked against `version.txt`, the commit subject and the rule), then deploy the site to GitHub Pages from `dev`. A pull request runs validate and test only. [`develop/index.md`](develop/index.md) has the major-release steps.
 
 ## How the site is built
 

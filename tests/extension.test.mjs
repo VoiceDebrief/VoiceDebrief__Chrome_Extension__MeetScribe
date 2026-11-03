@@ -51,6 +51,8 @@ before(async () => {
   [sw] = context.serviceWorkers();
   if (!sw) sw = await context.waitForEvent('serviceworker');
   extId = new URL(sw.url()).host;
+  // install opens the options page (first run, by design); wait for it, so it cannot interrupt a test's navigation
+  for (const end = Date.now() + 5000; Date.now() < end && !context.pages().some(p => p.url().endsWith('/options.html'));) await new Promise(r => setTimeout(r, 100));
   await settings({ apiKey: 'test-key-not-a-real-key', apiBase: replay.base, model: 'openai/whisper-large-v3', zdr: true });
 });
 after(async () => {

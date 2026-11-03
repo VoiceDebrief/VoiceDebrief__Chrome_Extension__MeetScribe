@@ -104,19 +104,22 @@
 <pre data-lang="bash"><code>node admin/build/vendor-vd.mjs ../VoiceDebrief__Website</code></pre>
 <p>(VoiceDebrief's colour schemes, from a clone of the website repository, into <code>assets/</code> and <code>extension/</code>)</p>
 <h2 id="7-release">7. Release</h2>
+<p><strong>The version rule.</strong> A push to <code>dev</code> is a <strong>minor</strong> release: the next patch number, <code>v0.3.1</code> → <code>v0.3.2</code>. Only a push to <code>main</code> is a <strong>major</strong> release: <code>v0.3.x</code> → <code>v0.4.0</code>. These are the semantics of OSBot-GitHub-Actions' <code>git__increment-tag</code>, which voicedebrief.ai's pipeline uses. CI refuses any other number. A release whose run failed was never tagged, so the fix ships under the same number.</p>
+<p>A release to <code>dev</code>:</p>
 <ol>
 <li><code>git pull --ff-only origin dev</code></li>
-<li>Bump <code>admin/build/version.txt</code> once (<code>vX.Y.Z</code>); set the same number in <code>extension/manifest.json</code> and <code>package.json</code>.</li>
+<li>Set <code>admin/build/version.txt</code> to the next minor (<code>git tag --sort=-v:refname | head -1</code> shows the latest), and the same number in <code>extension/manifest.json</code> and <code>package.json</code>.</li>
 <li><code>node admin/build/package.mjs</code>, then <code>node admin/build/build.mjs</code>, then <code>node tests/run.mjs</code>, then <code>node admin/build/validate.mjs</code>.</li>
 <li>Add a row to <code>versions/index.md</code>, and update <code>built/index.md</code> if what exists changed.</li>
 <li>Commit with the subject <code>site vX.Y.Z: what changed</code>, and push to <code>dev</code>.</li>
 </ol>
-<p>Every push to <code>dev</code> runs <code>.github/workflows/deploy-pages.yml</code>:</p>
+<p>A major release goes to <code>main</code>: the same steps with the next major (<code>v0.4.0</code>) and the subject <code>site v0.4.0: ...</code>, pushed to <code>main</code>. Then merge <code>main</code> back into <code>dev</code>; CI sees the tag already on that commit and accepts it as released.</p>
+<p>Every push to <code>dev</code> or <code>main</code> runs <code>.github/workflows/deploy-pages.yml</code>:</p>
 <ol>
 <li><strong>validate:</strong> the gate.</li>
 <li><strong>test:</strong> the tests on GitHub's runner.</li>
-<li><strong>tag-release:</strong> tags <code>vX.Y.Z</code> on the commit whose subject carries it. It checks that <code>version.txt</code> agrees, that the new number is the next minor or a deliberate next major, and adds tags for earlier release commits that have none.</li>
-<li><strong>deploy:</strong> publishes the site to GitHub Pages.</li>
+<li><strong>tag-release:</strong> tags <code>vX.Y.Z</code> on the commit whose subject carries it. It checks that <code>version.txt</code> agrees and that the number follows the rule above. It also adds tags for earlier release commits that have none.</li>
+<li><strong>deploy:</strong> publishes the site, the extension's source and the zip to GitHub Pages, from <code>dev</code> only.</li>
 </ol>
 <p>A pull request runs validate and test only. The pattern is Fix the Page's; the actions are pinned to commit SHAs, as in the newsroom.</p>
 <h2 id="when-something-goes-wrong">When something goes wrong</h2>

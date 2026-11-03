@@ -6,19 +6,20 @@
 #                   exactly as brief v2.0 section 9 says, and the extension's code rules. Runs on pull requests too.
 #   2. test         node tests/run.mjs: unit tests in Node and the extension in Chromium (fake audio device, a local
 #                   server replaying OpenRouter). An extension that is not tested is not released.
-#   3. tag-release  every push to dev is a release and ends tagged v{release}.{major}.{minor}. The version is owned by
-#                   admin/build/version.txt (bumped once per release) and must also be in the release commit's subject
-#                   ("site vX.Y.Z: ..."). CI checks the two agree and that the bump is the next minor (or a deliberate
-#                   major), tags the release commit (HEAD on a direct push, HEAD's parent when a pull request lands as a
-#                   merge commit), and backfills tags for earlier release commits.
-#   4. deploy       publishes the site (and the extension's source) to GitHub Pages. Never when validation or the
-#                   tests failed, never from a pull request.
+#   3. tag-release  a push to dev is a MINOR release (vR.M.N -> vR.M.N+1); only a push to main is a MAJOR one
+#                   (vR.M.N -> vR.M+1.0), the semantics of OSBot-GitHub-Actions' git__increment-tag. The version
+#                   is set in admin/build/version.txt by the release commit (it is baked into the manifest, the
+#                   zip and the site, which the gate checks) and must be in its subject ("site vX.Y.Z: ..."). CI
+#                   checks the rule, tags the release commit, accepts a main release merged back into dev as
+#                   already released, and backfills tags for earlier release commits.
+#   4. deploy       publishes the site, the extension's source and its zip to GitHub Pages, from dev only. Never
+#                   when validation or the tests failed, never from a pull request or main.
 name: deploy-pages
 on:
   push:
-    branches: [dev]
+    branches: [dev, main]
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -61,114 +62,81 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [validate, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           fetch-depth: 0
-      - name: Tag this release (and backfill any missing historical tags)
+      - name: Tag this release (dev = minor, main = major; backfill missing historical tags)
+        env:
+          BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           git fetch --tags --quiet
           git config user.name  'GitHub Actions'
           git config user.email 'actions@github.com'
 
-          # Read the history ONCE, into a variable. Piping `git log` straight into an
-          # early-exiting reader (grep -m1, head) makes git log die of SIGPIPE, and under
-          # `pipefail` that exit status propagates out of the command substitution and
-          # kills the job: after the variable has been assigned, which makes it look like
-          # the next line failed. It is a race against the pipe buffer, so it passes on a
-          # short history and starts failing once the log outgrows it. Herestrings below
-          # read from a file: nothing upstream to signal.
+          # Read the history once, into a variable: piping git log into an early-exiting reader kills it
+          # with SIGPIPE under pipefail once the log outgrows the pipe buffer (a Fix the Page lesson).
           LOG=$(git log --format='%H;%s')
 
-          # Backfill: every release commit carries its version in the subject
-          # ("site vR.M.N: ..."). Tag any that are missing: idempotent, so this is a no-op
-          # on every run after the first.
+          # The version of THIS release, from the file that owns it, and its release commit: the newest
+          # commit whose subject carries a version ("site vX.Y.Z: ..."). HEAD on a direct push; HEAD's
+          # parent when a pull request lands as a merge commit.
+          VER=$(grep -oP '^v\K[0-9]+\.[0-9]+\.[0-9]+' admin/build/version.txt)
+          TAG="v$VER"
+          NEWEST=$(grep -oP '^[0-9a-f]+;site v\K[0-9]+\.[0-9]+\.[0-9]+(?=:)' <<< "$LOG" | head -1 || true)
+          if [ -z "$NEWEST" ]; then echo "::error::no commit carries a version in its subject (\"site vX.Y.Z: ...\")"; exit 1; fi
+          if [ "$NEWEST" != "$VER" ]; then echo "::error::version.txt says $TAG but the newest release commit is v$NEWEST"; exit 1; fi
+          REL=$(grep -m1 -F ";site v$VER:" <<< "$LOG" | cut -d';' -f1)
+          echo "branch $BRANCH, version.txt $TAG, release commit ${REL:0:9}"
+
+          # Already released? A major made on main and merged back into dev arrives here with its tag
+          # already on the same commit: that is a sync, not a new release.
+          if EXIST=$(git rev-parse -q --verify "refs/tags/$TAG^{commit}"); then
+            if [ "$EXIST" = "$REL" ]; then echo "$TAG is already released on ${REL:0:9}: nothing to tag"; exit 0; fi
+            echo "::error::$TAG already exists on ${EXIST:0:9}, an earlier commit: version.txt was not bumped"; exit 1
+          fi
+
+          # The rule: a push to dev is the next MINOR (vR.M.N -> vR.M.N+1); only a push to main is a
+          # MAJOR (vR.M.N -> vR.M+1.0). The same semantics as OSBot-GitHub-Actions' git__increment-tag.
+          PREV=$(git tag --list 'v*' | sort -V | tail -1 || true)
+          if [ -n "$PREV" ]; then
+            NEXT_MINOR=$(echo "$PREV" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
+            NEXT_MAJOR=$(echo "$PREV" | awk -F. '{split($1,a,"v"); printf "v%s.%d.0", a[2], $2+1}')
+            if [ "$BRANCH" = "main" ]; then WANT=$NEXT_MAJOR; KIND=major; else WANT=$NEXT_MINOR; KIND=minor; fi
+            if [ "$TAG" != "$WANT" ]; then
+              echo "::error::a push to $BRANCH is a $KIND release: latest tag is $PREV, so version.txt must be $WANT, not $TAG"; exit 1
+            fi
+          fi
+
+          # The load-bearing push: this release's tag, on its release commit.
+          git tag "$TAG" "$REL"
+          git push origin "refs/tags/$TAG"
+          echo "tagged ${REL:0:9} as $TAG"
+
+          # Best effort: tags for earlier release commits that have none. GITHUB_TOKEN cannot push a tag
+          # to a commit whose tree carries a different .github/workflows file, so some need a human push.
+          MISSED=0
           while IFS=';' read -r h s; do
             v=$(printf '%s' "$s" | grep -oP '^site v\K[0-9]+\.[0-9]+\.[0-9]+(?=:)' || true)
             if [ -n "$v" ] && ! git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
               git tag "v$v" "$h"
-              echo "backfilled v$v -> ${h:0:9}"
+              if git push origin "refs/tags/v$v" >/dev/null 2>&1; then echo "backfilled v$v -> ${h:0:9}"
+              else echo "::warning::could not push backfill tag v$v (GITHUB_TOKEN workflow-file limit)"; MISSED=$((MISSED+1)); fi
             fi
           done <<< "$LOG"
-
-          # The version of THIS release, from the file that owns it.
-          VER=$(grep -oP '^v\K[0-9]+\.[0-9]+\.[0-9]+' admin/build/version.txt)
-          TAG="v$VER"
-          echo "version.txt says $TAG"
-
-          # The release commit is the one whose SUBJECT carries the version. It is usually
-          # HEAD, but when dev advances by a merge commit: which is how a pull request
-          # lands: HEAD is the merge and the release commit is its parent. So anchor every
-          # check to the newest release commit reachable from HEAD rather than to HEAD itself.
-          NEWEST=$(grep -oP '^[0-9a-f]+;site v\K[0-9]+\.[0-9]+\.[0-9]+(?=:)' <<< "$LOG" | head -1 || true)
-          if [ -z "$NEWEST" ]; then
-            echo "::error::no commit in this history carries a version in its subject (\"site vX.Y.Z: ...\")"
-            exit 1
-          fi
-          if [ "$NEWEST" != "$VER" ]; then
-            echo "::error::version.txt says $TAG but the newest release commit in this history is v$NEWEST: the two disagree"
-            exit 1
-          fi
-          REL=$(grep -m1 -F ";site v$VER:" <<< "$LOG" | cut -d';' -f1 || true)
-          echo "release commit is ${REL:0:9}"
-
-          # The backfill above tags it. If the tag exists on an EARLIER commit than this
-          # one, the version was reused rather than bumped.
-          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::$TAG was not created: version.txt and the release commit disagree"
-            exit 1
-          fi
-          if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" != "$REL" ]; then
-            echo "::error::$TAG already exists on an earlier commit: version.txt was not bumped for this release"
-            exit 1
-          fi
-
-          # Every push to dev is a minor: the new tag must be the next minor after the
-          # previous latest (or a deliberate major/release bump to .0). `|| true` catches
-          # the very first release, where grep -v empties the pipe and would otherwise kill
-          # the job under pipefail.
-          PREV=$(git tag --list 'v*' | grep -v "^$TAG$" | sort -V | tail -1 || true)
-          if [ -n "$PREV" ]; then
-            NEXT_MINOR=$(echo "$PREV" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
-            NEXT_MAJOR=$(echo "$PREV" | awk -F. '{split($1,a,"v"); printf "v%s.%d.0", a[2], $2+1}')
-            if [ "$TAG" != "$NEXT_MINOR" ] && [ "$TAG" != "$NEXT_MAJOR" ]; then
-              echo "::error::latest tag is $PREV; expected $NEXT_MINOR (minor) or $NEXT_MAJOR (major), got $TAG"
-              exit 1
-            fi
-          fi
-
-          # The load-bearing push: THIS release's tag, on the release commit.
-          git push origin "refs/tags/$TAG"
-          echo "tagged ${REL:0:9} as $TAG"
-
-          # Best-effort: the backfilled historical tags. GITHUB_TOKEN cannot push a ref to
-          # a commit whose tree carries a DIFFERENT .github/workflows blob, so releases
-          # predating a workflow change may be rejected. Push what is accepted, report what
-          # is not.
-          MISSED=0
-          for t in $(git tag --list 'v*'); do
-            [ "$t" = "$TAG" ] && continue
-            if git push origin "refs/tags/$t" >/dev/null 2>&1; then
-              echo "backfill ok: $t"
-            else
-              echo "::warning::could not push backfill tag $t (GITHUB_TOKEN workflow-file limit)"
-              MISSED=$((MISSED+1))
-            fi
-          done
-          if [ "$MISSED" -gt 0 ]; then
-            echo "::notice::$MISSED historical tag(s) still need a human push: git push origin --tags"
-          fi
+          if [ "$MISSED" -gt 0 ]; then echo "::notice::$MISSED historical tag(s) need a human push: git push origin --tags"; fi
           true
 
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [validate, test, tag-release]
-    if: always() && github.event_name != 'pull_request' && needs.validate.result == 'success' && needs.test.result == 'success' && (needs.tag-release.result == 'success' || needs.tag-release.result == 'skipped')
+    # the site is served from dev (as voicedebrief.ai's is); main is tagged, not deployed
+    if: always() && github.event_name != 'pull_request' && github.ref != 'refs/heads/main' && needs.validate.result == 'success' && needs.test.result == 'success' && (needs.tag-release.result == 'success' || needs.tag-release.result == 'skipped')
     permissions:
       pages: write
       id-token: write

@@ -25,7 +25,12 @@ for (const f of files) {
   const n = Number((/^# tests (\d+)/m.exec(out) || [])[1] || 0);
   const nf = Number((/^# fail (\d+)/m.exec(out) || [0, 1])[1]);
   process.stdout.write(out.split('\n').filter((l) => /^(not ok|ok |# (tests|pass|fail)|    (not ok|ok ))/.test(l) || /Error|expected|actual/.test(l)).join('\n') + '\n');
-  if (r.status !== 0 || nf > 0 || n === 0) { failed++; console.error(`run: ${f} FAILED (exit ${r.status}, ${n} tests, ${nf} failed)`); if (!n) process.stdout.write(out); }
+  if (r.status !== 0 || nf > 0 || n === 0) {
+    failed++; console.error(`run: ${f} FAILED (exit ${r.status}, ${n} tests, ${nf} failed)`);
+    // print each failing test's whole TAP diagnostic block: the summary filter above hides the reason
+    if (!n) process.stdout.write(out);
+    else for (const m of out.matchAll(/^( *)not ok .*\n(?:\1  .*\n)*/gm)) process.stdout.write(m[0]);
+  }
   else console.log(`run: ${f} ok (${n} tests)`);
   ran.push({ f, n });
 }

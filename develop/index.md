@@ -114,18 +114,24 @@ node admin/build/vendor-vd.mjs ../VoiceDebrief__Website
 
 ## 7. Release
 
+**The version rule.** A push to `dev` is a **minor** release: the next patch number, `v0.3.1` → `v0.3.2`. Only a push to `main` is a **major** release: `v0.3.x` → `v0.4.0`. These are the semantics of OSBot-GitHub-Actions' `git__increment-tag`, which voicedebrief.ai's pipeline uses. CI refuses any other number. A release whose run failed was never tagged, so the fix ships under the same number.
+
+A release to `dev`:
+
 1. `git pull --ff-only origin dev`
-2. Bump `admin/build/version.txt` once (`vX.Y.Z`); set the same number in `extension/manifest.json` and `package.json`.
+2. Set `admin/build/version.txt` to the next minor (`git tag --sort=-v:refname | head -1` shows the latest), and the same number in `extension/manifest.json` and `package.json`.
 3. `node admin/build/package.mjs`, then `node admin/build/build.mjs`, then `node tests/run.mjs`, then `node admin/build/validate.mjs`.
 4. Add a row to `versions/index.md`, and update `built/index.md` if what exists changed.
 5. Commit with the subject `site vX.Y.Z: what changed`, and push to `dev`.
 
-Every push to `dev` runs `.github/workflows/deploy-pages.yml`:
+A major release goes to `main`: the same steps with the next major (`v0.4.0`) and the subject `site v0.4.0: ...`, pushed to `main`. Then merge `main` back into `dev`; CI sees the tag already on that commit and accepts it as released.
+
+Every push to `dev` or `main` runs `.github/workflows/deploy-pages.yml`:
 
 1. **validate:** the gate.
 2. **test:** the tests on GitHub's runner.
-3. **tag-release:** tags `vX.Y.Z` on the commit whose subject carries it. It checks that `version.txt` agrees, that the new number is the next minor or a deliberate next major, and adds tags for earlier release commits that have none.
-4. **deploy:** publishes the site to GitHub Pages.
+3. **tag-release:** tags `vX.Y.Z` on the commit whose subject carries it. It checks that `version.txt` agrees and that the number follows the rule above. It also adds tags for earlier release commits that have none.
+4. **deploy:** publishes the site, the extension's source and the zip to GitHub Pages, from `dev` only.
 
 A pull request runs validate and test only. The pattern is Fix the Page's; the actions are pinned to commit SHAs, as in the newsroom.
 
