@@ -1,0 +1,49 @@
+# Validates the site on every push and pull request, and publishes it to GitHub Pages from main.
+#   validate: admin/build/validate.mjs (generated pages up to date, links and anchors, key-shaped strings,
+#             house style, no scripts). A failure stops the publish.
+#   deploy:   main only. Pages must be enabled for this repository (Settings, Pages, Source: GitHub Actions).
+name: pages
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate
+        run: node admin/build/validate.mjs
+
+  deploy:
+    needs: [validate]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: |
+          mkdir -p /tmp/site
+          rsync -a ./ /tmp/site/ --exclude '.git' --exclude '.github' --exclude 'admin/build' --exclude 'node_modules'
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

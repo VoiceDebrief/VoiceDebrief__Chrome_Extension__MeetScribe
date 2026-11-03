@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe: transcribe the Meet call you are in, on your own key</title>
+<meta name="description" content="A Chrome extension that transcribes Google Meet calls through OpenRouter, without a bot, Google recording or a server: the review of the first brief, brief v2.0 and the plan.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="MeetScribe: transcribe the Meet call you are in, on your own key">
+<meta property="og:description" content="A Chrome extension that transcribes Google Meet calls through OpenRouter, without a bot, Google recording or a server: the review of the first brief, brief v2.0 and the plan.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl" href="review/index.html">Review</a>
+  <a class="nl" href="brief/index.html">Brief v2.0</a>
+  <a class="nl" href="plan/index.html">Plan</a>
+  <a class="nl" href="models/index.html">Models</a>
+  <a class="nl" href="sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<h1 id="meetscribe">MeetScribe</h1>
+<p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Your words are labelled <strong>You</strong>, everyone else's <strong>Meeting</strong>, and every point in the notes links back to the lines it came from.</p>
+<blockquote><p><strong>Status, 3 November 2026: specified, not built.</strong> This site holds the <a href="review/index.html">review</a> of the first brief, the <a href="brief/index.html">brief v2.0</a> that replaces it, and the <a href="plan/index.html">plan</a>, which starts with a two-to-three-day spike. There is no extension to install yet.</p></blockquote>
+<h2 id="the-one-rule">The one rule</h2>
+<blockquote><p><strong>MeetScribe listens only while you can see that it is listening, keeps every second it heard until that second is transcribed or you delete it, and never shows a guess as a fact.</strong></p></blockquote>
+<h2 id="is-it-feasible">Is it feasible?</h2>
+<p>Yes. Every API it needs exists and is documented: Chrome's tab capture into an offscreen document (Chrome 116 and later), <code>getUserMedia</code> for the microphone, and OpenRouter's <code>/api/v1/audio/transcriptions</code>, which listed 29 models on the day we looked. Nothing depends on Google, which matters: Google is shutting down the Meet Media API on 15 January 2027.</p>
+<p>The first brief (v1.0, drafted by ChatGPT) had the facts mostly right and four choices that would have failed without an error:</p>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>What v1.0 did</th><th>What goes wrong</th><th>v2.0</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>20-second <code>MediaRecorder</code> chunks</td><td>Only the first chunk is a decodable file; the model invents text for the rest</td><td>Own the samples: worklet, 16 kHz PCM, a WAV per segment</td></tr>
+<tr><td>R2, R3</td><td>Fixed cuts with overlap; every segment sent</td><td>Words cut in half; silence comes back as &quot;Thank you for watching&quot;</td><td>Cut at pauses; drop silence before it is sent</td></tr>
+<tr><td>R4</td><td>Its own microphone stream</td><td>Records you while you are muted in Meet</td><td>Opt-in per meeting, its own mute and shortcut, said plainly</td></tr>
+<tr><td>R5</td><td>&quot;Mic = You&quot;</td><td>On speakers, the mic hears everyone; their words become yours</td><td>Echo cancellation, measured; echoes marked, never deleted</td></tr>
+</tbody></table></div>
+<p>The <a href="review/index.html">review</a> has all 23 findings, the 14 claims that held, and a verdict on every section of v1.0.</p>
+<h2 id="read">Read</h2>
+<ul>
+<li><a href="review/index.html">Review of brief v1.0</a>: what holds, what is wrong, what is missing, what to change, with evidence.</li>
+<li><a href="brief/index.html">Brief v2.0</a>: the specification to build from.</li>
+<li><a href="plan/index.html">The plan</a>: Phase 0's eight go/no-go questions and the model bake-off, then three releases.</li>
+<li><a href="models/index.html">Transcription models</a>: the OpenRouter catalogue with price per hour, from a dated snapshot.</li>
+<li><a href="sources/index.html">Sources</a>: every fact, where it was read.</li>
+<li><a href="brief/v1/index.html">Brief v1.0, as received</a>: kept unedited.</li>
+</ul>
+<h2 id="where-it-comes-from">Where it comes from</h2>
+<p>MeetScribe is the Chrome extension the <a href="https://voicedebrief.ai">VoiceDebrief</a> brief deliberately left for later: the same bring-your-own-key OpenRouter model, the same rule that the transcript is never overwritten, and the lessons of its issue queue. It is built the way the <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a> hub and <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a> say extensions should be: a deliberately stupid recorder first, <code>null</code> never <code>0</code>, no remote code, and a release you can check against its source.</p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="review/index.html">Review of v1.0</a>
+    <a href="brief/index.html">Brief v2.0</a>
+    <a href="plan/index.html">Plan</a>
+    <a href="models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="sources/index.html">Sources</a>
+    <a href="brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

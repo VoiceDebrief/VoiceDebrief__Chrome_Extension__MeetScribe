@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Review of the MeetScribe brief v1.0</title>
+<meta name="description" content="The ChatGPT-drafted MeetScribe brief checked claim by claim: 14 facts that hold, 6 choices that fail silently, 11 gaps, 6 changes, with evidence.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="Review of the MeetScribe brief v1.0">
+<meta property="og:description" content="The ChatGPT-drafted MeetScribe brief checked claim by claim: 14 facts that hold, 6 choices that fail silently, 11 gaps, 6 changes, with evidence.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl here" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / review</div>
+<h1 id="review-of-the-meetscribe-brief-v1-0">Review of the MeetScribe brief v1.0</h1>
+<p>The <a href="../brief/v1/index.html">v1.0 brief</a> was drafted by ChatGPT. This page checks it, claim by claim, against the documentation as it stands on 3 November 2026 and against what the sgit.ai and VoiceDebrief projects have already learnt the hard way. The result is <a href="../brief/index.html">brief v2.0</a>.</p>
+<blockquote><p><strong>Verdict: feasible, with high confidence for the core path.</strong> Every API the brief depends on exists, is documented and is in use elsewhere: Chrome's tab capture into an offscreen document, <code>getUserMedia</code> for the microphone, and OpenRouter's <code>/api/v1/audio/transcriptions</code>. Nothing needs Google's cooperation. What the brief gets wrong is not whether it can be built but <em>how</em>: four of its choices produce failures that do not throw. They return a fluent transcript of the wrong thing, or a silent gap, and you find out weeks later.</p></blockquote>
+<h2 id="the-short-version">The short version</h2>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>Count</th><th>What</th></tr></thead>
+<tbody>
+<tr><td><span class="chip chip-keep">holds</span></td><td>14</td><td>Facts and principles that hold: OpenRouter's endpoint, request shape, <code>verbose_json</code>, the 60-second timeout and model filter; Business Starter has no Meet transcripts; the Meet Media API is being shut down; the offscreen-document capture pattern; persist before sending; never discard; never let an LLM rewrite the transcript; never invent a cost</td></tr>
+<tr><td><span class="chip chip-wrong">wrong</span></td><td>6</td><td>Choices that would fail silently or contradict the brief's own rules (below, R1 to R6)</td></tr>
+<tr><td><span class="chip chip-missing">missing</span></td><td>11</td><td>Things a real meeting will hit that the brief does not mention (R7 to R17)</td></tr>
+<tr><td><span class="chip chip-change">change</span></td><td>6</td><td>Choices that work but cost more than they return: the stack, the tests, the summariser, the default model, the popup, the spending limit (R18 to R23)</td></tr>
+</tbody></table></div>
+<p>The four that matter most, in order: <strong>R1</strong> (the segments MediaRecorder produces are not decodable files), <strong>R4</strong> (the microphone is captured even when you are muted in Meet), <strong>R2/R3</strong> (fixed 20-second cuts plus silence produce invented text) and <strong>R5</strong> (without headphones your microphone channel transcribes the other people and labels them &quot;You&quot;).</p>
+<h2 id="what-the-brief-gets-right">What the brief gets right</h2>
+<p>Each of these was checked against the source on 3 November 2026. The <a href="../sources/index.html">sources page</a> has the links.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Claim in v1.0</th><th>Status</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>Business Starter does not include Google Meet transcripts</td><td><span class="chip chip-verified">verified</span></td><td>Google's Meet help lists the editions with transcripts: Business Standard and Plus, Enterprise Starter, Standard and Plus, Teaching and Learning Upgrade, Education Plus, Workspace Individual. Business Starter is not on it. &quot;Take notes for me&quot; is Business Standard and above.</td></tr>
+<tr><td>The Google Meet Media API is &quot;discontinued&quot;</td><td><span class="chip chip-verified">verified</span></td><td>Meet REST API release notes, 28 October 2026: Google will &quot;wind down the Google Meet Media API and permanently turn down its endpoints on January 15, 2027&quot;. Strictly it is deprecated, not yet gone; either way, not a foundation.</td></tr>
+<tr><td><code>POST https://openrouter.ai/api/v1/audio/transcriptions</code>, Bearer auth, <code>input_audio: {data, format}</code>, <code>language</code>, <code>response_format: &quot;verbose_json&quot;</code></td><td><span class="chip chip-verified">verified</span></td><td>OpenRouter's Speech-to-Text guide documents exactly this body, plus <code>temperature</code>, <code>timestamp_granularities</code> and <code>provider</code>.</td></tr>
+<tr><td>Discover models with <code>?output_modalities=transcription</code></td><td><span class="chip chip-verified">verified</span></td><td>Works; returned 29 models on 3 November 2026 (<a href="../models/index.html">the snapshot</a>).</td></tr>
+<tr><td><code>verbose_json</code> is not universal; fall back to plain text</td><td><span class="chip chip-verified">verified</span></td><td>OpenRouter: providers without structured output reject it with a 400, &quot;as do some individual models (for example <code>openai/gpt-4o-transcribe</code> and <code>microsoft/mai-transcribe-1.5</code>)&quot;.</td></tr>
+<tr><td>Upstream timeout of about 60 seconds</td><td><span class="chip chip-verified">verified</span></td><td>OpenRouter: &quot;upstream providers time out after 60 seconds per request&quot;.</td></tr>
+<tr><td>Cost is reported per request; do not invent it</td><td><span class="chip chip-verified">verified</span></td><td>The response carries <code>usage.seconds</code> and <code>usage.cost</code> in USD.</td></tr>
+<tr><td>Tab audio stops playing once captured; route it to an <code>AudioContext</code></td><td><span class="chip chip-verified">verified</span></td><td>Chrome's screen-capture guide does exactly this (&quot;Continue to play the captured audio to the user&quot;).</td></tr>
+<tr><td><code>getMediaStreamId</code> from a user gesture, redeemed with <code>getUserMedia</code> in an offscreen document</td><td><span class="chip chip-verified">verified</span></td><td>Chrome's guide; <code>tabCapture</code> in a service worker from Chrome 116.</td></tr>
+<tr><td>Service workers must not own media streams</td><td><span class="chip chip-verified">verified</span></td><td>MV3 service workers are terminated when idle; the offscreen document is the supported home.</td></tr>
+<tr><td>Persist audio before sending; never discard on API failure; segment IDs for idempotency</td><td><span class="chip chip-keep">holds</span></td><td>The right instinct, and the chrome-extensions hub's first lesson (&quot;build a deliberately stupid recorder first: just keep the bodies&quot;).</td></tr>
+<tr><td>Do not let an LLM silently rewrite the canonical transcript</td><td><span class="chip chip-keep">holds</span></td><td>VoiceDebrief issue 055 reached the same rule: &quot;the transcript is never overwritten. It is the record of what was actually said.&quot;</td></tr>
+<tr><td>Do not present chunk timing as word timing; do not invent speakers</td><td><span class="chip chip-keep">holds</span></td><td>The hub's fourth sentence: missing is <code>null</code>, and <code>null</code> never becomes <code>0</code>.</td></tr>
+<tr><td>Start with one path: capture, one segment, one request, display</td><td><span class="chip chip-keep">holds</span></td><td>Section 24 of v1.0 is the best section in it. v2.0 makes it Phase 0 with go/no-go questions.</td></tr>
+</tbody></table></div>
+<h2 id="what-is-wrong">What is wrong</h2>
+<h3 id="r1-mediarecorder-segments-are-not-standalone-files-critical">R1. MediaRecorder segments are not standalone files <span class="chip chip-critical">critical</span></h3>
+<p>v1.0 section 7.5 says &quot;MediaRecorder, with conversion where required&quot; and 7.4 asks for 20-second segments. The obvious implementation is <code>recorder.start(20000)</code> and one <code>dataavailable</code> blob per segment. <strong>Only the first blob carries the WebM header.</strong> Blobs 2 to n are continuation clusters: not decodable on their own. Send one to a transcription model and you do not reliably get an error. VoiceDebrief already found out what you get instead (issue 025, 5 August 2026): an undecodable input produced &quot;a fluent, confident transcript of audio the user never recorded&quot;, different on every run.</p>
+<p><strong>Fix:</strong> own the samples. An <code>AudioWorklet</code> in the offscreen document takes each channel, downsamples to 16 kHz mono and writes PCM; each segment is wrapped as a WAV with its own header. WAV is the format OpenRouter recommends for accuracy, it is trivially valid, and the sample counter becomes the clock (which also answers 7.3's &quot;consistent audio clock&quot;). 20 seconds of 16 kHz 16-bit mono is 640 KB, 853 KB as base64: well inside every limit. Compression (Opus through WebCodecs) is a later optimisation, not an MVP need. Before anything is sent, the segment is checked by content (RIFF header, sample count, non-zero energy), never by the label we gave it.</p>
+<h3 id="r2-fixed-20-second-cuts-overlap-and-de-duplication-wrong">R2. Fixed 20-second cuts, overlap and de-duplication <span class="chip chip-wrong">wrong</span></h3>
+<p>Cutting every 20 seconds cuts through words, and v1.0's remedy (an overlap, then removing duplicate text &quot;without deleting legitimate repeated speech&quot;) is a hard problem that the brief hands to the implementer in one sentence.</p>
+<p><strong>Fix:</strong> cut at pauses. A voice activity detector (energy with an adaptive noise floor to start; a bundled Silero-class model later if needed) closes a segment at the first pause after a minimum length (about 8 s), aims for 15 to 25 s, and forces a cut at 30 s only in unbroken speech. No overlap, so no de-duplication. Forced cuts are marked on the segment so the rare boundary error is explainable.</p>
+<h3 id="r3-silence-becomes-invented-text-wrong">R3. Silence becomes invented text <span class="chip chip-wrong">wrong</span></h3>
+<p>A meeting is mostly silence on any one channel: your microphone while others speak, the tab while you speak. Whisper-family models are known to produce stock phrases from silence and noise (&quot;Thank you for watching&quot;). v1.0 sends every segment.</p>
+<p><strong>Fix:</strong> the same VAD drops segments with no speech before they are queued, and records that it did (a span of <code>silence</code> in the timeline, so a gap is explained, not missing). Returned text that matches a short list of known hallucination phrases is kept but flagged, never deleted. This also halves the bill for two channels (R9).</p>
+<h3 id="r4-your-microphone-is-recorded-while-you-are-muted-in-meet-critical">R4. Your microphone is recorded while you are muted in Meet <span class="chip chip-critical">critical</span></h3>
+<p>v1.0 captures the microphone with its own <code>getUserMedia</code>. That stream does not know about Meet's mute button. Mute yourself in Meet to talk to someone in the room, and MeetScribe transcribes it, labelled &quot;You&quot;, and sends it to a third party. The brief never mentions this.</p>
+<p><strong>Fix:</strong> the microphone channel is opt-in per meeting, has its own mute in the side panel and on a keyboard shortcut (<code>chrome.commands</code>), and the panel says plainly that MeetScribe's mute and Meet's mute are separate. Mirroring Meet's mute state needs a content script reading Meet's page (host permission, and Meet's DOM changes): v2.0 lists it as proposed, not MVP, and never as the only safeguard.</p>
+<h3 id="r5-without-headphones-the-microphone-hears-the-meeting-wrong">R5. Without headphones, the microphone hears the meeting <span class="chip chip-wrong">wrong</span></h3>
+<p>On laptop speakers the microphone channel picks up the remote participants. v1.0's main benefit of separate channels (&quot;label locally captured speech as <strong>You</strong>&quot;) then labels other people's words as yours, and the transcript says everything twice. Whether Chrome's echo canceller removes audio replayed by the extension's own <code>AudioContext</code> is not documented.</p>
+<p><strong>Fix:</strong> request <code>echoCancellation: true</code>, then measure it in Phase 0 (spike question S3). If leakage remains, a cross-channel check marks a microphone line as <code>probable-echo</code> when the tab channel carried near-identical text in the same window. Marked, shown dimmed, never deleted.</p>
+<h3 id="r6-the-data-model-contradicts-the-brief-s-own-rules-wrong">R6. The data model contradicts the brief's own rules <span class="chip chip-wrong">wrong</span></h3>
+<p><code>Meeting.totalCostUsd: number</code> cannot represent &quot;the provider did not say&quot;, which section 8.6 requires. <code>TranscriptSegment.status: &quot;completed&quot; | &quot;edited&quot;</code> overwrites the model's text on edit, which 9.3 forbids. v2.0: costs are <code>number | null</code> with a separate count of requests whose cost is unknown; edits are a revision layer over an immutable model output.</p>
+<h2 id="what-is-missing">What is missing</h2>
+<h3 id="r7-the-meeting-moves-to-the-wrong-speakers-missing">R7. The meeting moves to the wrong speakers <span class="chip chip-missing">missing</span></h3>
+<p>The replayed tab audio goes to the <code>AudioContext</code>'s default output device. If Meet was set to a headset and the system default is the laptop speakers, starting MeetScribe moves the meeting to the speakers mid-call. <strong>Fix:</strong> an output-device setting and <code>AudioContext.setSinkId()</code>; Phase 0 confirms the behaviour.</p>
+<h3 id="r8-the-popup-cannot-be-the-live-view-missing">R8. The popup cannot be the live view <span class="chip chip-missing">missing</span></h3>
+<p>v1.0 puts the active view in the popup. A popup closes the moment focus leaves it, which during a meeting is always. <strong>Fix:</strong> Chrome's side panel (as Fix the Page's playground does): it stays open beside Meet, follows the tab and holds the live transcript and controls. The popup can go entirely.</p>
+<h3 id="r9-two-channels-cost-twice-missing">R9. Two channels cost twice <span class="chip chip-missing">missing</span></h3>
+<p>Billing is per second of audio sent. Two always-on channels double it. With VAD (R3) each channel is billed only for its speech, so two channels cost about what one mixed channel would.</p>
+<h3 id="r10-asking-for-the-microphone-from-an-invisible-page-missing">R10. Asking for the microphone from an invisible page <span class="chip chip-missing">missing</span></h3>
+<p>An offscreen document is never shown, so it has nowhere to display Chrome's permission prompt, and a prompt raised from a popup closes the popup. <strong>Fix:</strong> a one-time setup page (a normal extension tab) asks for the microphone for the extension's origin; the offscreen document then uses that grant. Phase 0 confirms (S2).</p>
+<h3 id="r11-large-data-across-message-boundaries-missing">R11. Large data across message boundaries <span class="chip chip-missing">missing</span></h3>
+<p><code>chrome.runtime.sendMessage</code> serialises to JSON: a <code>Blob</code> arrives as <code>{}</code> and large payloads hit a size limit. The chrome-extensions hub lists exactly this as one of its six silent failures (&quot;a boundary that fails only when data gets big&quot;). <strong>Fix:</strong> audio never crosses a message. The offscreen document writes segments to IndexedDB; messages carry IDs.</p>
+<h3 id="r12-storage-that-can-be-evicted-missing">R12. Storage that can be evicted <span class="chip chip-missing">missing</span></h3>
+<p>A two-hour meeting with the network down is up to 460 MB of queued WAV (two channels at 32 KB/s; VAD makes it far less in practice). <strong>Fix:</strong> the <code>unlimitedStorage</code> permission and <code>navigator.storage.persist()</code>; transcribed audio deleted on the retention schedule.</p>
+<h3 id="r13-two-contexts-sending-the-same-segment-missing">R13. Two contexts sending the same segment <span class="chip chip-missing">missing</span></h3>
+<p>The offscreen document drains the queue during capture; after it, the service worker or the dashboard does. Segment IDs stop a duplicate <em>insert</em>, not a duplicate <em>charge</em>. <strong>Fix:</strong> a lease on each segment (<code>claimedBy</code>, <code>claimedUntil</code>) taken in an IndexedDB transaction before sending.</p>
+<h3 id="r14-a-rejected-key-looks-like-a-network-error-missing">R14. A rejected key looks like a network error <span class="chip chip-missing">missing</span></h3>
+<p>VoiceDebrief issue 032: when OpenRouter rejects a disabled key, the browser can receive the rejection without CORS headers, and <code>fetch</code> throws a bare <code>Failed to fetch</code>. <strong>Fix:</strong> in an extension, a host permission for <code>https://openrouter.ai/*</code> lifts the CORS restriction for extension pages, so the real 401 is readable; and on any network-shaped error the extension asks <code>GET /api/v1/key</code> before telling the user what went wrong.</p>
+<h3 id="r15-consent-per-meeting-and-a-notice-for-the-others-missing">R15. Consent per meeting, and a notice for the others <span class="chip chip-missing">missing</span></h3>
+<p>v1.0 asks once at setup. Meet's own recording tells everyone in the call; MeetScribe cannot. <strong>Fix:</strong> the start dialog asks every meeting, and offers a one-click copy of a short notice to paste into Meet's chat. MeetScribe does not post it itself (that would mean scripting Meet's page).</p>
+<h3 id="r16-build-provenance-missing">R16. Build provenance <span class="chip chip-missing">missing</span></h3>
+<p>The hub's first silent failure was ten days of testing an old build. <strong>Fix:</strong> the options page shows version, commit and build time, stamped at packaging, as Fix the Page does.</p>
+<h3 id="r17-telling-the-user-where-the-audio-goes-honestly-missing">R17. Telling the user where the audio goes, honestly <span class="chip chip-missing">missing</span></h3>
+<p>OpenRouter does not apply provider routing (<code>order</code>, <code>only</code>, <code>ignore</code>) to transcription requests; only the data-policy preferences (<code>zdr</code>, <code>data_collection</code>) apply. So the extension cannot promise which provider hears the meeting, only the policy it asked for. <strong>Fix:</strong> v2.0 sends <code>provider: { zdr: true }</code> by default, says which provider served each request when OpenRouter reports it, and uses VoiceDebrief's wording: the audio goes to OpenRouter and on to a provider we do not control.</p>
+<h2 id="what-to-change">What to change</h2>
+<h3 id="r18-the-stack-change">R18. The stack <span class="chip chip-change">change</span></h3>
+<p>v1.0: TypeScript, Vite with CRXJS, React, Tailwind, Zustand, Dexie. Six dependencies and a bundler for an extension with five small pages. The house style across sgit.ai and VoiceDebrief is native web components, no framework and no build step (<a href="https://coding.sgit.ai/javascript/index.html">coding.sgit.ai/javascript</a>; VoiceDebrief's CLAUDE.md: &quot;No SPA frameworks by default&quot;). For an extension the case is stronger: MV3 forbids remotely hosted code, so nothing can be imported from the tools origin the way the VoiceDebrief site does; a Web Store reviewer reads what ships; and a release zip that is the source byte for byte (Fix the Page's validator checks this) is only possible without a bundler. <strong>v2.0:</strong> ES modules and web components, no runtime dependencies, a 100-line IndexedDB wrapper instead of Dexie, types as JSDoc checked by <code>tsc --noEmit --checkJs --strict</code> (types without a build).</p>
+<h3 id="r19-mocked-openrouter-responses-change">R19. &quot;Mocked OpenRouter responses&quot; <span class="chip chip-change">change</span></h3>
+<p>The estate's rule is no mocks (<a href="https://nfrs.sgit.ai/testing/index.html">nfrs.sgit.ai/testing</a>). <strong>v2.0:</strong> responses recorded from real calls are replayed by a local server; Chromium's own fake-media flags (<code>--use-fake-device-for-media-stream</code>, <code>--use-file-for-fake-audio-capture=&lt;wav&gt;</code>) drive the microphone with known audio; a local page plays known audio into the tab that is captured; a keyless demo aborts any network request rather than faking one (VoiceDebrief issue 063).</p>
+<h3 id="r20-hierarchical-summarisation-from-day-one-change">R20. Hierarchical summarisation from day one <span class="chip chip-change">change</span></h3>
+<p>A two-hour meeting is roughly 18,000 to 25,000 words, about 25,000 to 35,000 tokens: one request for any current long-context model. <strong>v2.0:</strong> one pass with segment IDs as citations; split only when the transcript measurably exceeds the chosen model's context. Add VoiceDebrief's translate-before-summarise step for Portuguese meetings (issue 055).</p>
+<h3 id="r21-openai-whisper-1-as-the-default-change">R21. <code>openai/whisper-1</code> as the default <span class="chip chip-change">change</span></h3>
+<p>At $0.0001 per second ($0.36 an hour) it is the most expensive Whisper on OpenRouter. <code>openai/whisper-large-v3</code> lists from $0.027 an hour and <code>whisper-large-v3-turbo</code> from $0.012 (the <a href="../models/index.html">models page</a> has the snapshot). Because OpenRouter does not apply provider ordering to transcription, the provider that serves a request, and so its price, can vary; <code>usage.cost</code> is the only number to show. <strong>v2.0:</strong> no default is picked from a price list. Phase 0 runs a bake-off on your own recordings (English, Portuguese, mixed) and the winner becomes the default.</p>
+<h3 id="r22-a-soft-spending-limit-in-the-extension-change">R22. A soft spending limit in the extension <span class="chip chip-change">change</span></h3>
+<p>A limit enforced by the client is a suggestion. <strong>v2.0:</strong> the limit lives on the key: a dedicated OpenRouter key for MeetScribe with a credit limit and, if wanted, a model allowlist (the guidance on <a href="https://voicedebrief.ai/openrouter-key/">voicedebrief.ai/openrouter-key</a>). The extension's per-meeting budget is a second, friendlier line.</p>
+<h3 id="r23-remote-speaker-names-as-a-vague-later-change">R23. Remote speaker names as a vague &quot;later&quot; <span class="chip chip-change">change</span></h3>
+<p>Two concrete routes exist and v2.0 names both as proposed. (a) OpenRouter passes diarization options to some providers (Azure, Deepgram, Mistral's Voxtral 3) through <code>provider.options</code>; but speaker indices are per request, so &quot;speaker 0&quot; in one segment is not &quot;speaker 0&quot; in the next, and the labels must say so. (b) Meet's own live captions, available on every edition including Business Starter, carry speaker names; reading them means a content script on <code>meet.google.com</code> and depending on Meet's DOM. Neither is MVP.</p>
+<h2 id="section-by-section">Section by section</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>v1.0 section</th><th>Verdict</th><th>In v2.0</th></tr></thead>
+<tbody>
+<tr><td>1 Executive summary</td><td><span class="chip chip-keep">holds</span></td><td>Kept; the one rule added</td></tr>
+<tr><td>2 Scope</td><td><span class="chip chip-change">change</span></td><td>Side panel instead of popup; cost and history move to MVP-later</td></tr>
+<tr><td>3 Users</td><td><span class="chip chip-keep">holds</span></td><td>Kept</td></tr>
+<tr><td>4 User experience</td><td><span class="chip chip-change">change</span></td><td>Consent per meeting; separate mic mute; side panel</td></tr>
+<tr><td>5 Interface</td><td><span class="chip chip-change">change</span></td><td>Side panel, setup page, dashboard, options with provenance</td></tr>
+<tr><td>6 Architecture</td><td><span class="chip chip-change">change</span></td><td>Contexts table; who owns what; no audio across messages</td></tr>
+<tr><td>7 Audio capture</td><td><span class="chip chip-wrong">wrong</span></td><td>PCM worklet, WAV per segment, VAD cuts, output device</td></tr>
+<tr><td>8 OpenRouter</td><td><span class="chip chip-keep">holds</span></td><td>Kept, plus <code>zdr</code>, key check, lease, cost as <code>null</code></td></tr>
+<tr><td>9 Transcript</td><td><span class="chip chip-change">change</span></td><td>No overlap stitching; revision layer; echo marks</td></tr>
+<tr><td>10 Summaries</td><td><span class="chip chip-change">change</span></td><td>One pass; translate first; citations by segment ID</td></tr>
+<tr><td>11 Storage</td><td><span class="chip chip-wrong">wrong</span></td><td><code>null</code> costs; <code>unlimitedStorage</code>; leases</td></tr>
+<tr><td>12 Structure</td><td><span class="chip chip-change">change</span></td><td>No bundler; <code>extension/</code> folder like Fix the Page</td></tr>
+<tr><td>13 Permissions</td><td><span class="chip chip-change">change</span></td><td><code>declarativeContent</code>, <code>sidePanel</code>, <code>unlimitedStorage</code>, <code>alarms</code>; host permission only for OpenRouter</td></tr>
+<tr><td>14 Lifecycle</td><td><span class="chip chip-keep">holds</span></td><td>Kept, with the interrupted state made explicit</td></tr>
+<tr><td>15 Errors</td><td><span class="chip chip-keep">holds</span></td><td>Kept, plus key-check and hallucination rows</td></tr>
+<tr><td>16 Privacy</td><td><span class="chip chip-change">change</span></td><td>Honest routing statement; ZDR by default; mic disclosure</td></tr>
+<tr><td>17 Export</td><td><span class="chip chip-keep">holds</span></td><td>Kept</td></tr>
+<tr><td>18 Testing</td><td><span class="chip chip-change">change</span></td><td>Recorded real responses, Chromium fake media, keyless demo</td></tr>
+<tr><td>19 Acceptance</td><td><span class="chip chip-change">change</span></td><td>Measurable thresholds; the silent failures as tests</td></tr>
+<tr><td>20 Phases</td><td><span class="chip chip-change">change</span></td><td>Phase 0 spike with eight go/no-go questions</td></tr>
+<tr><td>21 Future</td><td><span class="chip chip-keep">holds</span></td><td>Kept, with local Whisper (WebGPU) as a privacy mode</td></tr>
+<tr><td>22 Agent guidance</td><td><span class="chip chip-keep">holds</span></td><td>Merged into the engineering rules</td></tr>
+</tbody></table></div>
+<h2 id="what-this-review-did-not-do">What this review did not do</h2>
+<p>It did not build anything. The four Chrome behaviours that only a real browser can settle (the gesture route for tab capture from the side panel, the microphone grant inheriting into the offscreen document, echo cancellation of replayed audio, <code>setSinkId</code> on the capture context) are written as questions for the <a href="../plan/index.html">Phase 0 spike</a>, not as facts. Prices are a dated snapshot and will move.</p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

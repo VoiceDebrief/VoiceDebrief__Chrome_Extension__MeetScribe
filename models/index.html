@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Transcription models on OpenRouter, with price per hour</title>
+<meta name="description" content="Every speech-to-text model OpenRouter lists, with price per hour of audio, generated from a dated snapshot.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="Transcription models on OpenRouter, with price per hour">
+<meta property="og:description" content="Every speech-to-text model OpenRouter lists, with price per hour of audio, generated from a dated snapshot.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl here" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / models</div>
+<h1 id="transcription-models-on-openrouter">Transcription models on OpenRouter</h1>
+<p>Every speech-to-text model OpenRouter listed on the day of the snapshot, with its price per hour of audio. The table is generated from <a href="../data/stt-models.json">data/stt-models.json</a>, which <code>admin/build/snapshot-models.mjs</code> writes from <code>GET /api/v1/models?output_modalities=transcription</code> and each model's <code>/endpoints</code>. The build never fetches: the page says what the file says, and the file says when it was taken.</p>
+<h2 id="how-to-read-it">How to read it</h2>
+<ul>
+<li><strong>Per hour</strong> is the listed <code>prompt</code> price times 3,600. OpenRouter's guide says duration-priced models are &quot;priced per second of audio input&quot;; the anchor that confirms the unit is <code>openai/whisper-1</code> at $0.0001 a second, which is OpenAI's published $0.006 a minute.</li>
+<li><strong>Token-priced</strong> models (a non-zero <code>completion</code> price) bill by audio and text tokens; their hourly cost depends on the speech and is not computed here. Read <code>usage.cost</code> from a real request.</li>
+<li><strong>Unit unclear</strong>: two Azure models list prices (0.1 and 0.36) that cannot be per second (that would be $360 and $1,296 an hour), and the unit is not stated. Not computed.</li>
+<li><strong>Range</strong> is across the providers serving the model. OpenRouter does not apply provider ordering (<code>order</code>, <code>only</code>, <code>ignore</code>) to transcription requests, so which provider, and so which price, serves a given request is not yours to choose. The extension shows <code>usage.cost</code>, never this table.</li>
+<li>A meeting with both channels and VAD is billed for roughly the minutes anybody spoke, so an hour of meeting is close to an hour of billed audio, not two.</li>
+</ul>
+<p>Snapshot taken 2026-11-03 00:24 UTC: 29 models.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Model</th><th>Per hour</th><th>Listed price</th><th>Providers</th><th>Listed since</th></tr></thead>
+<tbody>
+<tr><td><code>nvidia/nemotron-3.5-asr-streaming-multilingual-0.6b</code></td><td>$0.012</td><td>0.00000333 per second</td><td>DeepInfra</td><td>2026-08-13</td></tr>
+<tr><td><code>openai/whisper-large-v3-turbo</code></td><td>$0.012 to $0.040</td><td>0.00000333 per second</td><td>DeepInfra, Groq</td><td>2026-05-01</td></tr>
+<tr><td><code>qwen/qwen3-asr-0.6b</code></td><td>$0.012</td><td>0.00000333 per second</td><td>DeepInfra</td><td>2026-08-13</td></tr>
+<tr><td><code>openai/whisper-large-v3</code></td><td>$0.027 to $0.11</td><td>0.0000075 per second</td><td>DeepInfra, Together, Groq</td><td>2026-05-01</td></tr>
+<tr><td><code>qwen/qwen3-asr-1.7b</code></td><td>$0.027</td><td>0.0000075 per second</td><td>DeepInfra</td><td>2026-08-13</td></tr>
+<tr><td><code>mistralai/voxtral-mini-3b-2507</code></td><td>$0.060</td><td>0.0000166667 per second</td><td>DeepInfra</td><td>2026-08-13</td></tr>
+<tr><td><code>nvidia/parakeet-tdt-0.6b-v3</code></td><td>$0.090</td><td>0.000025 per second</td><td>Together</td><td>2026-05-27</td></tr>
+<tr><td><code>x-ai/grok-stt-1.0</code></td><td>$0.10</td><td>0.0000277777777778 per second</td><td>xAI</td><td>2026-07-23</td></tr>
+<tr><td><code>nvidia/nemotron-3.5-transcribe</code></td><td>$0.12</td><td>0.0000333 per second</td><td>DeepInfra</td><td>2026-10-29</td></tr>
+<tr><td><code>meta/muse-voice-transcribe-1.0</code></td><td>$0.18</td><td>0.00005 per second</td><td>Meta</td><td>2026-09-11</td></tr>
+<tr><td><code>mistralai/voxtral-mini-transcribe</code></td><td>$0.18 to $0.20</td><td>0.00005 per second</td><td>Mistral</td><td>2026-05-15</td></tr>
+<tr><td><code>mistralai/voxtral-small-24b-2507-stt</code></td><td>$0.18</td><td>0.00005 per second</td><td>DeepInfra</td><td>2026-08-13</td></tr>
+<tr><td><code>mistralai/voxtral-mini-transcribe-3-0</code></td><td>$0.21 to $0.23</td><td>0.0000583333 per second</td><td>Mistral</td><td>2026-10-20</td></tr>
+<tr><td><code>elevenlabs/scribe-v2</code></td><td>$0.22</td><td>0.0000611111111111 per second</td><td>ElevenLabs</td><td>2026-10-07</td></tr>
+<tr><td><code>elevenlabs/scribe-v2-medical</code></td><td>$0.22</td><td>0.0000611111111111 per second</td><td>ElevenLabs</td><td>2026-10-07</td></tr>
+<tr><td><code>mistralai/voxtral-small-transcribe-3-0</code></td><td>$0.24 to $0.26</td><td>0.0000666667 per second</td><td>Mistral</td><td>2026-10-20</td></tr>
+<tr><td><code>deepgram/nova-3</code></td><td>$0.26</td><td>0.0000716666666667 per second</td><td>Deepgram</td><td>2026-07-15</td></tr>
+<tr><td><code>openai/gpt-transcribe</code></td><td>$0.27</td><td>0.000075 per second</td><td>OpenAI</td><td>2026-08-05</td></tr>
+<tr><td><code>assemblyai/universal-3-5-pro</code></td><td>$0.30</td><td>0.0000833333 per second</td><td>AssemblyAI</td><td>2026-09-22</td></tr>
+<tr><td><code>assemblyai/universal-3-6-pro</code></td><td>$0.30</td><td>0.0000833333 per second</td><td>AssemblyAI</td><td>2026-10-14</td></tr>
+<tr><td><code>fish-audio/transcribe-1</code></td><td>$0.36</td><td>0.0001 per second</td><td>Fish Audio</td><td>2026-07-29</td></tr>
+<tr><td><code>fish-audio/transcribe-1-pro</code></td><td>$0.36</td><td>0.0001 per second</td><td>Fish Audio</td><td>2026-09-24</td></tr>
+<tr><td><code>openai/whisper-1</code></td><td>$0.36</td><td>0.0001 per second</td><td>OpenAI</td><td>2026-04-27</td></tr>
+<tr><td><code>google/chirp-3</code></td><td>$0.96</td><td>0.000266666666667 per second</td><td>Google</td><td>2026-05-05</td></tr>
+<tr><td><code>google/gemini-3.5-transcribe</code></td><td>token-priced</td><td>in 0.000002, out 0.000012 per token</td><td>Google AI Studio</td><td>2026-09-25</td></tr>
+<tr><td><code>openai/gpt-4o-mini-transcribe</code></td><td>token-priced</td><td>in 0.00000125, out 0.000005 per token</td><td>OpenAI</td><td>2026-05-01</td></tr>
+<tr><td><code>openai/gpt-4o-transcribe</code></td><td>token-priced</td><td>in 0.0000025, out 0.00001 per token</td><td>OpenAI</td><td>2026-04-27</td></tr>
+<tr><td><code>microsoft/mai-transcribe-1.5</code></td><td>unit unclear</td><td>0.36, unit not stated</td><td>Azure</td><td>2026-06-02</td></tr>
+<tr><td><code>microsoft/mai-transcribe-2</code></td><td>unit unclear</td><td>0.1, unit not stated</td><td>Azure</td><td>2026-09-03</td></tr>
+</tbody></table></div>
+<h2 id="the-bake-off-candidates">The bake-off candidates</h2>
+<p><a href="../plan/index.html">Phase 0</a> tests six of these on real recordings in English, Portuguese and both: <code>openai/whisper-large-v3</code>, <code>openai/whisper-large-v3-turbo</code>, <code>mistralai/voxtral-mini-transcribe-3-0</code>, <code>nvidia/nemotron-3.5-transcribe</code>, <code>elevenlabs/scribe-v2</code>, <code>openai/gpt-transcribe</code>. The choice is made on quality first; this table only says what each would cost if it wins.</p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

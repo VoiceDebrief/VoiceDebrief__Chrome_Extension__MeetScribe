@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe brief v2.0</title>
+<meta name="description" content="The specification for MeetScribe: capture, segmentation at pauses, the OpenRouter queue, transcript, notes, storage, permissions, privacy and acceptance criteria.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="MeetScribe brief v2.0">
+<meta property="og:description" content="The specification for MeetScribe: capture, segmentation at pauses, the OpenRouter queue, transcript, notes, storage, permissions, privacy and acceptance criteria.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl here" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / brief</div>
+<h1 id="meetscribe-brief-v2-0">MeetScribe brief v2.0</h1>
+<p>A Chrome extension that transcribes a Google Meet call you are in, on your own OpenRouter key, without Google's recording or transcription features, a bot in the call, or a server of ours.</p>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>Version</td><td>2.0, 3 November 2026</td></tr>
+<tr><td>Replaces</td><td><a href="v1/index.html">v1.0</a> (ChatGPT draft); every change is reasoned on the <a href="../review/index.html">review</a></td></tr>
+<tr><td>Status</td><td><span class="chip chip-spec">specified</span> Specified, nothing built. The <a href="../plan/index.html">plan</a> starts with a Phase 0 spike</td></tr>
+<tr><td>Family</td><td>VoiceDebrief (<a href="https://voicedebrief.ai">voicedebrief.ai</a>) for the product; the <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a> hub for how extensions are built</td></tr>
+<tr><td>Owner</td><td>Dinis Cruz, editor</td></tr>
+</tbody></table></div>
+<p>Status marks used below: <span class="chip chip-spec">specified</span> in this brief, to be built; <span class="chip chip-spike">spike</span> a question Phase 0 must answer before the design is final; <span class="chip chip-proposed">proposed</span> an idea for the editor to accept or refuse, not in the MVP.</p>
+<h2 id="1-the-one-rule">1. The one rule</h2>
+<blockquote><p><strong>MeetScribe listens only while you can see that it is listening, keeps every second it heard until that second is transcribed or you delete it, and never shows a guess as a fact.</strong></p></blockquote>
+<p>Everything below follows from it: a visible side panel instead of a hidden recorder; audio persisted before it is sent; a cost of <code>null</code> rather than a made-up <code>0</code>; a speaker label only where the channel proves it; a dimmed <code>probable-echo</code> line rather than a silent deletion.</p>
+<h2 id="2-who-it-is-for-and-what-it-does">2. Who it is for and what it does</h2>
+<p>The first user is one person on Google Workspace Business Starter, which has no Meet transcripts (Google's edition list stops at Business Standard), who already uses OpenRouter and wants transcripts and notes they hold themselves. Then freelancers, consultants and small teams on the same plan.</p>
+<h3 id="in-the-mvp-specified">In the MVP <span class="chip chip-spec">specified</span></h3>
+<ul>
+<li>Start and stop by hand, from the side panel, on a <code>meet.google.com</code> tab.</li>
+<li>Two channels: the meeting (tab audio) and, if you opt in for this meeting, your microphone.</li>
+<li>You keep hearing the meeting, on the device you chose.</li>
+<li>Speech is cut at pauses, queued in IndexedDB, transcribed through OpenRouter, shown live in the side panel.</li>
+<li>Lines from your microphone are labelled <strong>You</strong>; lines from the tab are labelled <strong>Meeting</strong>. Nothing else is claimed about speakers.</li>
+<li>Nothing is lost: offline, rate-limited, out of credit, browser closed. Captured segments wait and are retried; failed ones are visible and can be retried by hand.</li>
+<li>After the meeting: a summary (decisions, actions, open questions) with each point citing the segments it rests on; optional translation first.</li>
+<li>History of meetings, edit with the original kept, export to TXT, Markdown and JSON.</li>
+<li>Cost per meeting as OpenRouter reported it, with requests whose cost was not reported counted separately.</li>
+</ul>
+<h3 id="later-proposed">Later <span class="chip chip-proposed">proposed</span></h3>
+<p>Remote speaker labels (section 13), search across meetings, a local Whisper engine as a &quot;browser-local&quot; privacy mode, Drive and Docs export, custom summary templates, a meeting assistant (&quot;what did I agree to?&quot;).</p>
+<h3 id="never">Never</h3>
+<p>A bot in the call. Google's recording, transcription or the Meet Media API (deprecated 28 October 2026, endpoints off 15 January 2027). Starting without a click. Hiding Chrome's capture indicator. A server of ours holding audio or transcripts. Video.</p>
+<h2 id="3-architecture">3. Architecture</h2>
+<h3 id="who-owns-what">Who owns what</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Context</th><th>Lives</th><th>Owns</th><th>Never</th></tr></thead>
+<tbody>
+<tr><td>Service worker</td><td>Wakes on events</td><td>Session state machine, commands, <code>tabs.onRemoved</code>, alarms to drain the queue after a restart</td><td>Holds a media stream or audio</td></tr>
+<tr><td>Offscreen document (reason <code>USER_MEDIA</code>)</td><td>Only while capturing</td><td>Both streams, playback to the speakers, the worklet, VAD, writing segments, draining the queue during capture</td><td>Shows UI</td></tr>
+<tr><td>Side panel</td><td>While open</td><td>Live transcript, start, stop, pause, mic mute, consent dialog, warnings</td><td>Holds audio</td></tr>
+<tr><td>Setup page (an extension tab)</td><td>First run</td><td>API key, microphone grant, output device, test connection</td><td></td></tr>
+<tr><td>Dashboard (an extension tab)</td><td>On demand</td><td>History, transcript editing, summary, export, retries</td><td></td></tr>
+<tr><td>Options page</td><td>On demand</td><td>Settings, data deletion, build provenance</td><td></td></tr>
+</tbody></table></div>
+<p>All contexts share the extension origin, so all read the same IndexedDB. Messages between them carry IDs and small state, never audio (a <code>Blob</code> sent through <code>chrome.runtime.sendMessage</code> arrives as <code>{}</code>).</p>
+<h3 id="data-flow">Data flow</h3>
+<pre data-lang="text"><code> Meet tab ──tabCapture.getMediaStreamId (user gesture)──┐
+                                                        v
+ Offscreen document                               getUserMedia(tab)      getUserMedia(mic, opt-in)
+   tab stream ──► AudioContext ──► destination (setSinkId: your output device)
+        │                                                              │
+        └──► AudioWorklet: 16 kHz mono PCM, sample counter = clock ◄────┘   (one per channel)
+                       │
+                       ▼
+               VAD: cut at pauses (8 s min, 15-25 s target, 30 s forced), drop silence
+                       │
+                       ▼
+               WAV segment ──► IndexedDB  (status: pending)        ◄── persisted BEFORE any send
+                                    │
+                 drain (lease) ─────┤  offscreen during capture; service worker / dashboard after
+                                    ▼
+               POST openrouter.ai/api/v1/audio/transcriptions  { provider: { zdr: true } }
+                                    │
+                                    ▼
+               transcript line (immutable model output) + usage.cost|null ──► side panel, dashboard
+                                    │
+                         after stop ▼
+               (translate) ──► summary with segment citations ──► export</code></pre>
+<h2 id="4-capture">4. Capture</h2>
+<h3 id="4-1-the-meeting-specified-spike">4.1 The meeting <span class="chip chip-spec">specified</span> <span class="chip chip-spike">spike</span></h3>
+<p>The user's click on the extension is the gesture. The service worker calls <code>chrome.tabCapture.getMediaStreamId({ targetTabId })</code> (Chrome 116 and later), creates the offscreen document if absent, and passes it the ID. The offscreen document redeems it with <code>getUserMedia({ audio: { mandatory: { chromeMediaSource: 'tab', chromeMediaSourceId } } })</code>, audio only.</p>
+<p>Capturing silences the tab, so the offscreen document routes the stream to <code>AudioContext.destination</code> at once. The context's output goes to the device chosen in setup through <code>AudioContext.setSinkId()</code>, so the meeting does not jump from a headset to the laptop speakers.</p>
+<p>Spike S1 decides the gesture route: (a) the action click opens the side panel and its Start button requests the stream ID, or (b) the action click itself starts capture and opens the panel. (a) is preferred because the consent dialog comes before any audio exists.</p>
+<h3 id="4-2-your-microphone-specified-spike">4.2 Your microphone <span class="chip chip-spec">specified</span> <span class="chip chip-spike">spike</span></h3>
+<p>Opt-in per meeting, off by default. Granted once, for the extension's origin, from the setup page (an offscreen document cannot show a prompt, and a prompt from a popup closes it; spike S2 confirms the grant carries over). Requested with <code>echoCancellation: true, noiseSuppression: true, autoGainControl: true</code> and the device chosen in setup. Never routed to the speakers.</p>
+<p>The side panel always shows the microphone's state, has its own mute, and says, in these words: <em>MeetScribe's microphone is separate from Meet's. Muting yourself in Meet does not mute MeetScribe.</em> A keyboard shortcut (<code>chrome.commands</code>, suggested <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>) toggles it from any tab. If the grant is refused or the device disappears, capture continues with the meeting channel and a visible warning.</p>
+<h3 id="4-3-samples-not-recorder-blobs-specified">4.3 Samples, not recorder blobs <span class="chip chip-spec">specified</span></h3>
+<p>MediaRecorder is not used for segments: with a timeslice only the first blob carries the container header, and the rest are not decodable files. Each channel goes through an <code>AudioWorklet</code> that downsamples to 16 kHz mono 16-bit PCM and posts frames to the offscreen document's main thread. The running sample count per channel is the clock: a segment's start and end are sample offsets from the session start, converted to milliseconds for display. Both channels start from the same <code>AudioContext.currentTime</code>, so they share one timeline.</p>
+<p>Each segment is written as a WAV (RIFF header plus PCM): 32 KB per second, 640 KB for 20 seconds. Opus through WebCodecs is a later saving, not an MVP need.</p>
+<h3 id="4-4-cutting-at-pauses-specified">4.4 Cutting at pauses <span class="chip chip-spec">specified</span></h3>
+<p>A voice activity detector per channel (RMS energy against an adaptive noise floor, with a 300 ms hangover) closes a segment at the first pause of at least 600 ms once the segment is 8 seconds long, and forces a cut at 30 seconds in unbroken speech. A forced cut is recorded on the segment (<code>cut: &quot;forced&quot;</code>). Segments with no speech are not stored as audio; the timeline records a <code>silence</code> span, so a gap is explained rather than missing. No overlap and no text de-duplication: a pause is a natural boundary.</p>
+<h3 id="4-5-checked-by-content-before-sending-specified">4.5 Checked by content before sending <span class="chip chip-spec">specified</span></h3>
+<p>Before a segment is queued: the bytes start with <code>RIFF....WAVE</code>, the sample count matches the declared duration, and the energy is not zero. A segment that fails is marked <code>invalid</code> with the reason and kept for inspection. Never trust a label we wrote ourselves (VoiceDebrief issue 025).</p>
+<h2 id="5-transcription">5. Transcription</h2>
+<h3 id="5-1-the-request-specified">5.1 The request <span class="chip chip-spec">specified</span></h3>
+<pre data-lang="text"><code>POST https://openrouter.ai/api/v1/audio/transcriptions
+Authorization: Bearer &lt;key from chrome.storage.local, never logged&gt;
+{
+  &quot;model&quot;: &quot;&lt;chosen in setup&gt;&quot;,
+  &quot;input_audio&quot;: { &quot;data&quot;: &quot;&lt;base64 WAV&gt;&quot;, &quot;format&quot;: &quot;wav&quot; },
+  &quot;language&quot;: &quot;&lt;ISO-639-1, or omitted for auto-detect&gt;&quot;,
+  &quot;response_format&quot;: &quot;verbose_json&quot;,
+  &quot;timestamp_granularities&quot;: [&quot;segment&quot;],
+  &quot;temperature&quot;: 0,
+  &quot;provider&quot;: { &quot;zdr&quot;: true }
+}</code></pre>
+<p>If the model rejects <code>verbose_json</code> with a 400, the extension records that for the model and retries with <code>json</code>; lines from that model show segment-level time only. The extension never sets <code>prompt</code> at the top level (OpenRouter accepts and ignores it); continuity prompts for providers that support them go under <code>provider.options</code> and are <span class="chip chip-proposed">proposed</span>.</p>
+<h3 id="5-2-the-response-specified">5.2 The response <span class="chip chip-spec">specified</span></h3>
+<p>Validate the status, then the shape. Store <code>text</code>, <code>segments</code> (offsets added to the audio segment's start), <code>language</code>, <code>usage.seconds</code>, <code>usage.cost</code> (or <code>null</code>), and the <code>X-Generation-Id</code> header. The model's output is immutable once stored.</p>
+<p>Text that matches a known hallucination phrase (&quot;thank you for watching&quot;, &quot;subtitles by&quot;, and the like, a list kept in the repository with its sources) is flagged <code>suspect</code>, shown dimmed, never deleted.</p>
+<h3 id="5-3-the-queue-specified">5.3 The queue <span class="chip chip-spec">specified</span></h3>
+<p>Segments are <code>pending</code>, <code>sending</code>, <code>done</code>, <code>failed</code> or <code>invalid</code>. Before sending, a context takes a lease (<code>claimedBy</code>, <code>claimedUntil</code> = now + 90 s) in an IndexedDB transaction; a lease that expires returns the segment to <code>pending</code>. Two requests in flight per meeting at most. The offscreen document drains during capture; afterwards an <code>alarms</code> tick in the service worker and the open dashboard do. A browser restart resumes the drain.</p>
+<h3 id="5-4-errors-specified">5.4 Errors <span class="chip chip-spec">specified</span></h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Response</th><th>Meaning</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>200</td><td>Done</td><td>Store, show, release the lease</td></tr>
+<tr><td>400</td><td>Bad request</td><td><code>verbose_json</code> rejected: retry once as <code>json</code>. Otherwise <code>failed</code> with the message; no retry</td></tr>
+<tr><td>401, 403</td><td>Key rejected</td><td>Stop sending for every meeting; the panel names the key, not the network</td></tr>
+<tr><td>402</td><td>Out of credit</td><td>Stop sending; keep capturing; say so; resume when the key works</td></tr>
+<tr><td>413</td><td>Too large</td><td>Should not happen at 30 s maximum; <code>failed</code>, reported as a bug</td></tr>
+<tr><td>429, 529</td><td>Rate limit, overloaded</td><td>Respect <code>Retry-After</code>; back off with jitter</td></tr>
+<tr><td>500, 502, 503, 504, 524</td><td>Upstream or timeout</td><td>Back off with jitter, up to 5 attempts, then <code>failed</code> with a manual retry</td></tr>
+<tr><td><code>Failed to fetch</code></td><td>Network, or a key rejected without CORS</td><td>Ask <code>GET /api/v1/key</code>. Rejected: treat as 401. Accepted: offline; keep the queue, retry on <code>online</code></td></tr>
+</tbody></table></div>
+<p>Backoff: 2, 4, 8, 16, 32 s, each with up to 50% jitter.</p>
+<h3 id="5-5-choosing-the-model-spike">5.5 Choosing the model <span class="chip chip-spike">spike</span></h3>
+<p>No default is chosen from a price list. Phase 0 transcribes the same recordings (English, Portuguese, mixed, one with crosstalk) with four to six candidates from the <a href="../models/index.html">snapshot</a>, and the editor picks on quality, then cost from <code>usage.cost</code>, then latency, then <code>verbose_json</code> support. Starting candidates: <code>openai/whisper-large-v3</code>, <code>openai/whisper-large-v3-turbo</code>, <code>mistralai/voxtral-mini-transcribe-3-0</code>, <code>nvidia/nemotron-3.5-transcribe</code>, <code>elevenlabs/scribe-v2</code>, <code>openai/gpt-transcribe</code>. The setup page lists the live catalogue (<code>/api/v1/models?output_modalities=transcription</code>) so the user can pick another.</p>
+<h2 id="6-the-transcript">6. The transcript</h2>
+<h3 id="6-1-lines-specified">6.1 Lines <span class="chip chip-spec">specified</span></h3>
+<p>One line per returned segment (or per request, where the model gives no segments). Ordered by the audio segment's start sample, so out-of-order responses settle into place. A gap where a segment is <code>pending</code> or <code>failed</code> is shown as such, with a retry button: the transcript is never silently shorter than the meeting.</p>
+<h3 id="6-2-labels-specified">6.2 Labels <span class="chip chip-spec">specified</span></h3>
+<p><strong>You</strong> for the microphone channel, <strong>Meeting</strong> for the tab. A microphone line whose text closely matches a tab line overlapping it in time is marked <code>probable-echo</code> and shown dimmed (spike S3 measures how often). No other speaker labels in the MVP.</p>
+<h3 id="6-3-edits-specified">6.3 Edits <span class="chip chip-spec">specified</span></h3>
+<p>Edits are a revision layer: <code>{ lineId, text, editedAt }</code>. The model's text stays; export offers edited (default) or original. Reprocessing never touches an edit.</p>
+<h3 id="6-4-time-specified">6.4 Time <span class="chip chip-spec">specified</span></h3>
+<p>Every line has a start time to the millisecond on the session clock, honestly labelled: <code>≈</code> when it is the audio segment's start, exact when the model returned segment timestamps.</p>
+<h2 id="7-after-the-meeting">7. After the meeting</h2>
+<p>Declared as a small workflow file, as VoiceDebrief's pass is (issue 042): steps, model, ceiling per step, what to do on failure.</p>
+<ol>
+<li><strong>Drain</strong> until no segment is <code>pending</code> or <code>sending</code> (or the user proceeds with gaps, which the summary is told about).</li>
+<li><strong>Translate</strong> <span class="chip chip-spec">specified</span>, optional, on when the detected language differs from the summary language. The transcript is never replaced; the translation is a separate artefact. On failure the summary runs on the original.</li>
+<li><strong>Summarise</strong> <span class="chip chip-spec">specified</span> with a chosen text model through <code>/api/v1/chat/completions</code>, in one request. Split into sections and merge only when the transcript is measured to exceed the model's context. The prompt requires: an executive summary; discussion points; decisions <em>explicitly</em> agreed; action items with owner and due date only where stated, otherwise <code>null</code>; open questions; suggestions kept apart from commitments; every item citing segment IDs, which the dashboard turns into links. Output is JSON, validated against a schema before display.</li>
+</ol>
+<p>A failed summary leaves the transcript untouched.</p>
+<h2 id="8-storage">8. Storage</h2>
+<p>IndexedDB through a small wrapper, no library. <code>chrome.storage.local</code> holds settings and the key only. Permission <code>unlimitedStorage</code>, and <code>navigator.storage.persist()</code> on first run.</p>
+<pre data-lang="ts"><code>// Types shown as TypeScript for reading; the code carries them as JSDoc.
+type Meeting = {
+  id: string; title: string; tabTitle: string | null;
+  startedAt: string; endedAt: string | null;
+  status: 'capturing' | 'paused' | 'draining' | 'complete' | 'interrupted';
+  sampleRate: 16000; channels: ('tab' | 'mic')[];
+  model: string; language: string | null;
+  costUsd: number;            // the sum of reported costs only
+  costUnknownRequests: number; // requests whose cost was not reported
+};
+type AudioSegment = {
+  id: string; meetingId: string; channel: 'tab' | 'mic'; seq: number;
+  startSample: number; endSample: number; cut: 'pause' | 'forced' | 'stop';
+  wav: Blob | null;            // null once deleted under the retention policy
+  status: 'pending' | 'sending' | 'done' | 'failed' | 'invalid';
+  attempts: number; lastError: string | null;
+  claimedBy: string | null; claimedUntil: number | null;
+};
+type Line = {
+  id: string; meetingId: string; segmentId: string; channel: 'tab' | 'mic';
+  startMs: number; endMs: number; timing: 'segment-start' | 'model';
+  text: string;                // immutable model output
+  flags: ('suspect' | 'probable-echo')[];
+  model: string; generationId: string | null; costUsd: number | null;
+};
+type Edit = { lineId: string; text: string; editedAt: string };
+type Summary = { id: string; meetingId: string; model: string; generatedAt: string;
+  sourceLanguage: string | null; language: string; json: object; costUsd: number | null };</code></pre>
+<p>Retention defaults: transcripts and summaries until deleted; audio deleted 7 days after its segment is <code>done</code> (setting: immediately, 7 days, 30 days, keep); <code>failed</code> and <code>invalid</code> audio kept until retried or deleted. Delete meeting and Delete all data remove every row and blob, then report the count.</p>
+<h2 id="9-permissions">9. Permissions</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Permission</th><th>Why</th><th>Warning at install</th></tr></thead>
+<tbody>
+<tr><td><code>tabCapture</code></td><td>The meeting's audio</td><td>No</td></tr>
+<tr><td><code>offscreen</code></td><td>A document to hold the streams</td><td>No</td></tr>
+<tr><td><code>activeTab</code></td><td>Confirm the invoked tab is <code>meet.google.com</code></td><td>No</td></tr>
+<tr><td><code>sidePanel</code></td><td>The live view</td><td>No</td></tr>
+<tr><td><code>declarativeContent</code></td><td>Enable the icon only on <code>meet.google.com</code>, without reading any page</td><td>No</td></tr>
+<tr><td><code>storage</code>, <code>unlimitedStorage</code></td><td>Settings; audio queue that is not evicted</td><td>No</td></tr>
+<tr><td><code>alarms</code></td><td>Resume the queue after the service worker sleeps</td><td>No</td></tr>
+<tr><td><code>host_permissions: https://openrouter.ai/*</code></td><td>Transcription and summary requests, readable errors</td><td>Yes: &quot;Read and change your data on openrouter.ai&quot;</td></tr>
+</tbody></table></div>
+<p>Not requested: <code>tabs</code>, <code>&lt;all_urls&gt;</code>, <code>meet.google.com</code> host access, <code>scripting</code>, <code>history</code>, <code>webRequest</code>, <code>debugger</code>. The microphone is a web permission granted on the setup page, not a manifest permission. <code>minimum_chrome_version: &quot;116&quot;</code>.</p>
+<pre data-lang="json"><code>&quot;content_security_policy&quot;: {
+  &quot;extension_pages&quot;: &quot;script-src 'self'; object-src 'self'; connect-src https://openrouter.ai&quot;
+}</code></pre>
+<h2 id="10-interface">10. Interface</h2>
+<ul>
+<li><strong>Side panel</strong> <span class="chip chip-spec">specified</span>: idle (Meet detected, model, mic choice, Start); consent dialog; active (elapsed, channel meters, mic mute with the separate-mute sentence, queue counts <code>sent / pending / failed</code>, live lines, Pause, Stop); after (drain progress, Open in dashboard).</li>
+<li><strong>Setup page</strong> <span class="chip chip-spec">specified</span>: key with Test (<code>GET /api/v1/key</code>, shows the key's limit and usage), how to make a capped key, microphone grant and choice, output device with a test tone, model picker from the live catalogue, language.</li>
+<li><strong>Dashboard</strong> <span class="chip chip-spec">specified</span>: history on the left; transcript with search, edit and retry in the middle; summary on the right; export.</li>
+<li><strong>Options</strong> <span class="chip chip-spec">specified</span>: retention, budget per meeting, summary model and language, delete all; build provenance (version, commit, build time).</li>
+</ul>
+<p>Pause stops capture (no audio exists for the paused span); it does not merely pause sending.</p>
+<h2 id="11-privacy-consent-security">11. Privacy, consent, security</h2>
+<ul>
+<li><strong>Where the audio goes.</strong> Audio is captured on your machine and sent to OpenRouter, and from there to a model provider OpenRouter chooses. MeetScribe asks for zero-data-retention routes (<code>provider.zdr: true</code>) and shows the provider when OpenRouter reports it; it does not promise which provider hears your meeting. Transcripts, summaries and audio otherwise stay in this browser profile.</li>
+<li><strong>Consent, every meeting.</strong> The start dialog: <em>You are about to transcribe this meeting. Tell the other participants, and stop if anyone objects. Recording or transcribing without consent is unlawful in some places.</em> With a Copy notice button (<em>&quot;I'm using MeetScribe to transcribe this call on my own machine; the audio goes to a transcription service. Say if you'd rather I didn't.&quot;</em>). MeetScribe does not post it for you.</li>
+<li><strong>Visible.</strong> Chrome's own capture indicator is never hidden; the icon badge shows while capturing; stopping is one click or the tab closing.</li>
+<li><strong>The key.</strong> In <code>chrome.storage.local</code>, never in logs, exports, URLs or errors; replaceable and clearable. Use a dedicated OpenRouter key with a credit limit; that limit is the real spending cap.</li>
+<li><strong>The code.</strong> No remote code, no <code>eval</code>, CSP above, transcript text rendered with <code>textContent</code> only, every message between contexts validated against its expected shape, no telemetry.</li>
+</ul>
+<h2 id="12-engineering-rules">12. Engineering rules</h2>
+<ol>
+<li>ES modules and native web components; no framework, no bundler, no runtime dependencies. Types as JSDoc, checked with <code>tsc --noEmit --checkJs --strict</code> in CI.</li>
+<li><code>extension/</code> is what ships; the release zip equals it byte for byte, with a SHA-256 beside it.</li>
+<li>Tests with no mocks: recorded real OpenRouter responses replayed by a local server; Chromium's fake media (<code>--use-fake-device-for-media-stream</code>, <code>--use-file-for-fake-audio-capture</code>) for the microphone; a local page playing known audio for the tab; a keyless demo that aborts any network request.</li>
+<li>The silent failures are tests: a non-first MediaRecorder chunk is rejected by the content check; a <code>Blob</code> never crosses a message; a cost that was not reported stays <code>null</code>; a segment is never sent twice under concurrent drains; silence produces no request.</li>
+<li>A validator gates every release: manifest permissions are exactly section 9's, no <code>fetch</code> outside <code>openrouter.ai</code>, no <code>innerHTML</code> with data, no key-shaped string (<code>sk-or-v1-</code>) anywhere.</li>
+<li>British English, no em-dashes, in the code's strings and the site.</li>
+</ol>
+<h2 id="13-speaker-labels-later-proposed">13. Speaker labels, later <span class="chip chip-proposed">proposed</span></h2>
+<ul>
+<li><strong>Diarization through OpenRouter.</strong> Some providers accept diarization under <code>provider.options</code> and return a <code>speaker</code> index per segment. Indices are per request, so labels would read &quot;Speaker A (this segment)&quot; unless segments are longer or voices are matched across them. Needs its own spike.</li>
+<li><strong>Meet's captions.</strong> Meet's live captions work on every edition and carry names. Reading them needs a content script and host access to <code>meet.google.com</code>, and depends on Meet's page structure. If adopted: read-only, opt-in, used only to suggest names for <strong>Meeting</strong> lines, never to replace audio transcription.</li>
+</ul>
+<h2 id="14-acceptance-criteria">14. Acceptance criteria</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>ID</th><th>Criterion</th><th>Measured by</th></tr></thead>
+<tbody>
+<tr><td>A1</td><td>Starts on Business Starter with Meet's recording and transcripts unused</td><td>Manual, on a Business Starter account</td></tr>
+<tr><td>A2</td><td>You hear the meeting, on your chosen device, with no echo and no added delay you can notice</td><td>Manual, headset and speakers</td></tr>
+<tr><td>A3</td><td>Every second captured is transcribed, <code>pending</code>, <code>failed</code> or <code>silence</code>; nothing unaccounted</td><td>Test: sum of spans equals session length</td></tr>
+<tr><td>A4</td><td>No segment is billed twice</td><td>Test: concurrent drains, killed service worker</td></tr>
+<tr><td>A5</td><td>2 hours of capture: offscreen memory flat (within 50 MB of the 5-minute mark)</td><td>Spike S4, then a test</td></tr>
+<tr><td>A6</td><td>Network off for 10 minutes: all segments sent after it returns</td><td>Test</td></tr>
+<tr><td>A7</td><td>A rejected key is reported as a key problem, never as a network error</td><td>Test with a revoked key</td></tr>
+<tr><td>A8</td><td>The microphone is never captured unless enabled for this meeting, and its mute works from any tab</td><td>Test</td></tr>
+<tr><td>A9</td><td>Costs shown equal the sum of <code>usage.cost</code>; unreported costs are counted, not zero</td><td>Test</td></tr>
+<tr><td>A10</td><td>Summary items each cite at least one segment; no owner or date without one in the transcript</td><td>Test on recorded meetings</td></tr>
+<tr><td>A11</td><td>Meetings survive a browser restart; an interrupted capture is marked <code>interrupted</code> with its data</td><td>Test</td></tr>
+<tr><td>A12</td><td>Delete all leaves no MeetScribe data in IndexedDB or storage</td><td>Test</td></tr>
+<tr><td>A13</td><td>Exports: TXT, Markdown, JSON, never containing the key or audio</td><td>Test</td></tr>
+</tbody></table></div>
+<h2 id="15-open-questions-for-the-editor">15. Open questions for the editor</h2>
+<ol>
+<li>Where the extension's site lives: this repository's GitHub Pages, <code>meetscribe.voicedebrief.ai</code>, or <code>meetscribe.chrome-extension.sgit.ai</code> beside Fix the Page.</li>
+<li>Whether MeetScribe is a VoiceDebrief product (its key guidance, its privacy wording, possibly its declared-workflow code) or an sgit.ai example extension.</li>
+<li>Chrome Web Store or load-unpacked only for the first users.</li>
+<li>Whether the per-meeting consent dialog may be skipped for meetings you host alone (a recording of yourself).</li>
+<li>The summary language default: the meeting's language or the browser's.</li>
+</ol>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

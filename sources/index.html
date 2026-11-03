@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe sources</title>
+<meta name="description" content="Every external fact the MeetScribe review and brief rest on, and where it was read.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="MeetScribe sources">
+<meta property="og:description" content="Every external fact the MeetScribe review and brief rest on, and where it was read.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl here" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / sources</div>
+<h1 id="sources">Sources</h1>
+<p>Every external fact the <a href="../review/index.html">review</a> and <a href="../brief/index.html">brief v2.0</a> rest on, with where it was read. All were read on 3 November 2026. Where a fact is about behaviour no document states, it is marked as a <span class="chip chip-spike">spike</span> question rather than listed here as a fact.</p>
+<h2 id="google">Google</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Fact</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Meet transcripts are available in Business Standard, Business Plus, Enterprise Starter, Standard and Plus, Teaching and Learning Upgrade, Education Plus and Workspace Individual; not Business Starter</td><td><a href="https://support.google.com/meet/answer/12849897">Use transcripts with Google Meet</a></td></tr>
+<tr><td>&quot;Take notes for me&quot; is Business Standard and Plus among Business editions</td><td><a href="https://workspaceupdates.googleblog.com/2026/04/require-explicit-consent-for-take-notes-with-Gemini-recordings-and-transcripts-in-Google-Meet.html">Workspace Updates, April 2026</a> and earlier posts</td></tr>
+<tr><td>The Meet Media API is deprecated (28 October 2026); its endpoints are turned down on 15 January 2027; the Meet REST API and Add-ons SDK are unaffected</td><td><a href="https://developers.google.com/meet/docs/release-notes">Meet REST API release notes</a></td></tr>
+</tbody></table></div>
+<h2 id="chrome">Chrome</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Fact</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Tab capture from a service worker from Chrome 116; stream ID passed to an offscreen document; captured audio replayed through an <code>AudioContext</code> so the user keeps hearing it</td><td><a href="https://developer.chrome.com/docs/extensions/how-to/web-platform/screen-capture">Audio recording and screen capture</a></td></tr>
+<tr><td>Offscreen documents and their reasons, including <code>USER_MEDIA</code></td><td><a href="https://developer.chrome.com/docs/extensions/reference/api/offscreen">chrome.offscreen</a></td></tr>
+<tr><td>The side panel</td><td><a href="https://developer.chrome.com/docs/extensions/reference/api/sidePanel">chrome.sidePanel</a></td></tr>
+<tr><td>Enabling the action by URL without host permissions</td><td><a href="https://developer.chrome.com/docs/extensions/reference/api/declarativeContent">chrome.declarativeContent</a></td></tr>
+<tr><td>Extension pages with host permissions are not limited by CORS for those hosts</td><td><a href="https://developer.chrome.com/docs/extensions/develop/concepts/network-requests">Cross-origin network requests</a></td></tr>
+<tr><td>No remotely hosted code in Manifest V3</td><td><a href="https://developer.chrome.com/docs/extensions/develop/migrate/remote-hosted-code">Manifest V3: remotely hosted code</a></td></tr>
+<tr><td><code>AudioContext.setSinkId()</code></td><td><a href="https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId">MDN: AudioContext.setSinkId</a></td></tr>
+<tr><td><code>MediaRecorder</code> timeslice chunks are pieces of one stream, not separate files</td><td><a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/start">MDN: MediaRecorder.start</a></td></tr>
+</tbody></table></div>
+<h2 id="openrouter">OpenRouter</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Fact</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td><code>/api/v1/audio/transcriptions</code>: body, <code>verbose_json</code>, <code>timestamp_granularities</code>, <code>provider.zdr</code>, <code>provider.options</code>; <code>prompt</code> accepted and ignored; routing preferences not applied to transcription; 60-second upstream timeout; 25 MB multipart cap; <code>usage.seconds</code> and <code>usage.cost</code>; <code>X-Generation-Id</code></td><td><a href="https://openrouter.ai/docs/guides/overview/multimodal/stt.md">Speech-to-Text guide</a>, <a href="https://openrouter.ai/docs/api/api-reference/stt/create-transcription.md">API reference</a></td></tr>
+<tr><td><code>verbose_json</code> rejected by some models, e.g. <code>openai/gpt-4o-transcribe</code>, <code>microsoft/mai-transcribe-1.5</code></td><td>Speech-to-Text guide, &quot;Verbose transcripts&quot;</td></tr>
+<tr><td>The model catalogue and prices</td><td><a href="../data/stt-models.json">data/stt-models.json</a>, from <code>/api/v1/models?output_modalities=transcription</code></td></tr>
+<tr><td>Zero data retention routing</td><td><a href="https://openrouter.ai/docs/guides/features/zdr.md">ZDR</a></td></tr>
+</tbody></table></div>
+<h2 id="what-this-family-already-learnt">What this family already learnt</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Lesson</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Undecodable audio comes back as a fluent invented transcript, not an error; detect by content, not by label</td><td>VoiceDebrief issue 025, <a href="https://github.com/VoiceDebrief/VoiceDebrief__Website/blob/dev/issues/done/025-ogg-mime-hallucinated-transcript.md">issues/done/025-ogg-mime-hallucinated-transcript.md</a></td></tr>
+<tr><td>A rejected key can surface as <code>Failed to fetch</code>; ask <code>GET /api/v1/key</code></td><td>VoiceDebrief issue 032</td></tr>
+<tr><td>Translate before summarising; never overwrite the transcript</td><td>VoiceDebrief issue 055</td></tr>
+<tr><td>The pass as a declared workflow with ceilings per step</td><td>VoiceDebrief issue 042</td></tr>
+<tr><td>A keyless demo that aborts the network instead of mocking it</td><td>VoiceDebrief issue 063</td></tr>
+<tr><td>A capped, dedicated OpenRouter key</td><td><a href="https://voicedebrief.ai/openrouter-key/">voicedebrief.ai/openrouter-key</a></td></tr>
+<tr><td>Build a deliberately stupid recorder first; missing is <code>null</code>; the six silent failures; build provenance</td><td><a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>, <a href="https://chrome-extensions.sgit.ai/silent-failures/index.html">silent failures</a>, <a href="https://chrome-extensions.sgit.ai/checklist/index.html">checklist</a>, <a href="https://chrome-extensions.sgit.ai/rubric/index.html">rubric</a></td></tr>
+<tr><td><code>activeTab</code> over host permissions; the side panel; release zip equal to the source; a validator as the gate</td><td><a href="https://fix-the-page.chrome-extension.sgit.ai">fix-the-page.chrome-extension.sgit.ai</a></td></tr>
+<tr><td>Native web components, no framework, no build step</td><td><a href="https://coding.sgit.ai/javascript/index.html">coding.sgit.ai/javascript</a></td></tr>
+<tr><td>No mocks; link the measurement, date every number</td><td><a href="https://nfrs.sgit.ai">nfrs.sgit.ai</a></td></tr>
+</tbody></table></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

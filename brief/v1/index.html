@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe brief v1.0 (original, superseded)</title>
+<meta name="description" content="The original MeetScribe brief, drafted by ChatGPT, kept unedited. Superseded by brief v2.0.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="MeetScribe brief v1.0 (original, superseded)">
+<meta property="og:description" content="The original MeetScribe brief, drafted by ChatGPT, kept unedited. Superseded by brief v2.0.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">specified · not built</span>
+  <span class="ver" title="Site version">v0.1.0</span>
+  <a class="nl" href="../../review/index.html">Review</a>
+  <a class="nl here" href="../../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../../plan/index.html">Plan</a>
+  <a class="nl" href="../../models/index.html">Models</a>
+  <a class="nl" href="../../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../../index.html">MeetScribe</a> / brief / v1</div>
+<h1 id="meetscribe-brief-v1-0-original">MeetScribe brief v1.0 (original)</h1>
+<blockquote><p><strong>This is the original brief, kept as it was received on 3 November 2026, byte for byte below the line.</strong> It was drafted by ChatGPT and is superseded by <a href="../index.html">brief v2.0</a>. The <a href="../../review/index.html">review</a> says, section by section, what holds and what changed. Nothing below has been edited, so its mistakes stay where they were made.</p></blockquote>
+<hr>
+<h1 id="meetscribe-product-requirements-technical-implementation-brief">MeetScribe — Product Requirements &amp; Technical Implementation Brief</h1>
+<p><strong>Version:</strong> 1.0<br>
+<strong>Date:</strong> November 2026<br>
+<strong>Project type:</strong> Chrome browser extension<br>
+<strong>Platform:</strong> Google Meet / Google Chrome<br>
+<strong>AI provider:</strong> OpenRouter<br>
+<strong>Implementation language:</strong> TypeScript<br>
+<strong>Target:</strong> Personal-use MVP, extensible into a commercial product</p>
+<hr>
+<h1 id="1-executive-summary">1. Executive Summary</h1>
+<h2 id="1-1-project-overview">1.1 Project Overview</h2>
+<p>MeetScribe is a lightweight Chrome extension that captures audio from a Google Meet session, transcribes the conversation using speech-to-text models accessed through OpenRouter, and optionally generates structured AI-powered meeting notes.</p>
+<p>The extension must work with Google Workspace Business Starter accounts, which do not include Google's native meeting transcription functionality.</p>
+<p>The solution must operate independently of Google Meet's recording and transcription features.</p>
+<p>The extension will capture:</p>
+<ul>
+<li>Audio played through the Google Meet browser tab.</li>
+<li>Audio from the user's own microphone.</li>
+<li>Optional timestamps indicating when speech occurred.</li>
+</ul>
+<p>Audio will be processed in manageable segments and sent to the selected transcription model through OpenRouter.</p>
+<p>The resulting transcript will be stored locally and made available for reading, searching, editing, copying, and exporting.</p>
+<p>An optional second AI processing stage will generate meeting summaries, decisions, action items, and other structured outputs.</p>
+<h2 id="1-2-primary-objective">1.2 Primary Objective</h2>
+<p>Build a reliable, privacy-conscious, inexpensive Google Meet transcription tool that requires no additional Google Workspace subscription.</p>
+<h2 id="1-3-guiding-principles">1.3 Guiding Principles</h2>
+<ol>
+<li><strong>Simple:</strong> Start transcription with minimal interaction.</li>
+<li><strong>Non-intrusive:</strong> No meeting bot or additional participant.</li>
+<li><strong>Local-first:</strong> Store transcripts and meeting metadata locally by default.</li>
+<li><strong>Model-independent:</strong> Allow users to select available OpenRouter models.</li>
+<li><strong>Reliable:</strong> Protect against lost audio, API failures, and browser lifecycle events.</li>
+<li><strong>Transparent:</strong> Show when audio capture is active and inform users about data transmission.</li>
+<li><strong>Extensible:</strong> Separate capture, transcription, storage, and AI analysis into independent components.</li>
+</ol>
+<hr>
+<h1 id="2-product-scope">2. Product Scope</h1>
+<h2 id="2-1-mvp-requirements">2.1 MVP Requirements</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Feature</th><th>Priority</th><th>MVP</th></tr></thead>
+<tbody>
+<tr><td>Detect an active Google Meet tab</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Start/stop audio capture manually</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Capture meeting tab audio</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Capture local microphone audio</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Preserve normal meeting audio playback</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Transcribe using OpenRouter</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Select transcription model</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Save transcript locally</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Export TXT and Markdown</td><td>P0</td><td>Yes</td></tr>
+<tr><td>Recover from transcription API errors</td><td>P0</td><td>Yes</td></tr>
+<tr><td>AI-generated meeting summaries</td><td>P1</td><td>Yes</td></tr>
+<tr><td>Action item extraction</td><td>P1</td><td>Yes</td></tr>
+<tr><td>Meeting history</td><td>P1</td><td>Yes</td></tr>
+<tr><td>Display timestamps</td><td>P1</td><td>Yes</td></tr>
+<tr><td>API usage and cost tracking</td><td>P1</td><td>Yes</td></tr>
+<tr><td>Speaker diarization</td><td>P2</td><td>Later</td></tr>
+<tr><td>Automatic participant-name matching</td><td>P2</td><td>Later</td></tr>
+<tr><td>Search across meetings</td><td>P2</td><td>Later</td></tr>
+<tr><td>Google Drive integration</td><td>P2</td><td>Later</td></tr>
+<tr><td>Multi-language translation</td><td>P2</td><td>Later</td></tr>
+<tr><td>Direct Claude/ChatGPT integration</td><td>P2</td><td>Later</td></tr>
+<tr><td>Multi-browser support</td><td>P2</td><td>Later</td></tr>
+</tbody></table></div>
+<p>P0 = essential; P1 = desired MVP enhancement; P2 = future release.</p>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>The initial version will not:</p>
+<ul>
+<li>Join meetings as an automated participant.</li>
+<li>Use Google Meet's recording features.</li>
+<li>Use the discontinued Google Meet Media API.</li>
+<li>Capture video or screen-sharing content.</li>
+<li>Automatically transcribe meetings without explicit user action.</li>
+<li>Offer a cloud-hosted transcript archive.</li>
+<li>Provide guaranteed identification of remote participants.</li>
+<li>Synchronize transcripts across devices.</li>
+<li>Support mobile Google Meet.</li>
+</ul>
+<hr>
+<h1 id="3-target-users">3. Target Users</h1>
+<h2 id="primary-user">Primary User</h2>
+<p>An individual or small-business user who:</p>
+<ul>
+<li>Uses Google Meet regularly.</li>
+<li>Has Google Workspace Business Starter.</li>
+<li>Wants transcripts without upgrading Workspace.</li>
+<li>Prefers using their own OpenRouter API key.</li>
+<li>Wants full control over transcript storage.</li>
+<li>Uses ChatGPT, Claude, or other LLMs for analysing meetings.</li>
+</ul>
+<h2 id="secondary-users">Secondary Users</h2>
+<p>Freelancers, consultants, project managers, developers, and small teams who need searchable records of conversations and decisions.</p>
+<hr>
+<h1 id="4-user-experience">4. User Experience</h1>
+<h2 id="4-1-initial-setup">4.1 Initial Setup</h2>
+<p>The user installs the extension from a local development build or the Chrome Web Store.</p>
+<p>On first launch, the extension presents a setup screen.</p>
+<p>Required configuration:</p>
+<ol>
+<li>OpenRouter API key.</li>
+<li>Preferred transcription model.</li>
+<li>Preferred transcript language or automatic language detection.</li>
+<li>Microphone selection and permission.</li>
+<li>Audio retention settings.</li>
+<li>Confirmation that the user understands and will follow applicable meeting consent requirements.</li>
+</ol>
+<p>Optional configuration:</p>
+<ul>
+<li>Summary model.</li>
+<li>Automatic summarisation after meetings.</li>
+<li>Maximum transcription expenditure per meeting.</li>
+<li>Audio processing segment duration.</li>
+<li>Default export format.</li>
+</ul>
+<p>A <strong>Test Connection</strong> button must validate the API key and communicate whether the transcription service is available.</p>
+<h2 id="4-2-starting-a-meeting-transcript">4.2 Starting a Meeting Transcript</h2>
+<p>Typical workflow:</p>
+<ol>
+<li>The user joins a Google Meet meeting.</li>
+<li>The extension detects an active Meet tab.</li>
+<li>The extension icon displays an available status.</li>
+<li>The user clicks the extension and selects <strong>Start Transcription</strong>.</li>
+<li>The extension presents a short recording/transcription disclosure reminder and obtains any necessary permissions.</li>
+<li>Audio capture begins.</li>
+<li>The extension displays an active capture indicator.</li>
+<li>Audio is processed and transcription results appear progressively.</li>
+<li>The user can continue using Google Meet normally.</li>
+</ol>
+<p>The user must be able to switch to other tabs while audio capture continues.</p>
+<p>The extension must not interfere with microphone input, audio output, or Google Meet controls.</p>
+<h2 id="4-3-during-the-meeting">4.3 During the Meeting</h2>
+<p>The user can access a transcript dashboard displaying:</p>
+<ul>
+<li>Meeting title.</li>
+<li>Session start time.</li>
+<li>Elapsed time.</li>
+<li>Audio capture status.</li>
+<li>Microphone capture status.</li>
+<li>Current transcription status.</li>
+<li>Transcript text received so far.</li>
+<li>API usage and cost.</li>
+<li>Any warnings or processing errors.</li>
+</ul>
+<p>Supported actions:</p>
+<ul>
+<li>Pause transcription.</li>
+<li>Resume transcription.</li>
+<li>Stop transcription.</li>
+<li>Copy transcript.</li>
+<li>Open the full dashboard.</li>
+</ul>
+<p>Pausing must clearly distinguish between stopping audio capture and merely pausing API transcription. The default Pause action should suspend capture so the user does not unintentionally collect unwanted audio.</p>
+<h2 id="4-4-ending-the-meeting">4.4 Ending the Meeting</h2>
+<p>The user selects <strong>Stop Transcription</strong>, or the extension detects that the captured Meet tab has closed or the media stream has ended.</p>
+<p>The extension should:</p>
+<ol>
+<li>Stop audio acquisition.</li>
+<li>Finalise any buffered audio.</li>
+<li>Complete pending transcription requests.</li>
+<li>Reconcile transcript segments in chronological order.</li>
+<li>Persist the final transcript.</li>
+<li>Display the completed meeting.</li>
+<li>Offer to generate an AI summary.</li>
+</ol>
+<p>The extension should not silently discard pending or failed audio segments.</p>
+<h2 id="4-5-viewing-a-completed-meeting">4.5 Viewing a Completed Meeting</h2>
+<p>A saved meeting contains:</p>
+<p><strong>Meeting metadata</strong></p>
+<ul>
+<li>Title.</li>
+<li>Start and end timestamps.</li>
+<li>Duration.</li>
+<li>Language.</li>
+<li>Transcription model.</li>
+<li>Number of processed segments.</li>
+<li>Estimated or reported API cost.</li>
+</ul>
+<p><strong>Transcript</strong></p>
+<ul>
+<li>Text.</li>
+<li>Time references where available.</li>
+<li>Optional audio-source labels.</li>
+<li>User-editable content.</li>
+</ul>
+<p><strong>AI notes</strong></p>
+<ul>
+<li>Executive summary.</li>
+<li>Key discussion points.</li>
+<li>Decisions made.</li>
+<li>Action items.</li>
+<li>Open questions.</li>
+<li>Follow-up items.</li>
+</ul>
+<hr>
+<h1 id="5-proposed-user-interface">5. Proposed User Interface</h1>
+<h2 id="5-1-extension-popup">5.1 Extension Popup</h2>
+<p>Approximate dimensions: 380 × 500 pixels.</p>
+<h3 id="idle-view">Idle View</h3>
+<ul>
+<li>Product name and icon.</li>
+<li>Google Meet connection status.</li>
+<li>Selected transcription model.</li>
+<li>Microphone status.</li>
+<li>Start Transcription button.</li>
+<li>Settings button.</li>
+</ul>
+<h3 id="active-view">Active View</h3>
+<ul>
+<li>Recording/transcription indicator.</li>
+<li>Elapsed timer.</li>
+<li>Tab audio indicator.</li>
+<li>Microphone indicator.</li>
+<li>Latest transcript text.</li>
+<li>Pause / Resume / Stop controls.</li>
+<li>Open Dashboard button.</li>
+</ul>
+<h3 id="completed-view">Completed View</h3>
+<ul>
+<li>Meeting duration.</li>
+<li>Transcription completion status.</li>
+<li>Open Transcript button.</li>
+<li>Generate Summary button.</li>
+<li>Export button.</li>
+</ul>
+<h2 id="5-2-full-dashboard">5.2 Full Dashboard</h2>
+<p>A dedicated extension page will provide more space for reading and managing meeting transcripts.</p>
+<p>Suggested layout:</p>
+<p><strong>Left panel</strong></p>
+<ul>
+<li>Meeting history.</li>
+<li>Meeting titles.</li>
+<li>Dates.</li>
+<li>Status indicators.</li>
+</ul>
+<p><strong>Main panel</strong></p>
+<ul>
+<li>Meeting title and details.</li>
+<li>Transcript.</li>
+<li>Timestamps.</li>
+<li>Editable text.</li>
+<li>Search within transcript.</li>
+</ul>
+<p><strong>Right panel or separate tab</strong></p>
+<ul>
+<li>Summary.</li>
+<li>Decisions.</li>
+<li>Action items.</li>
+<li>Questions.</li>
+<li>AI model selection.</li>
+</ul>
+<h2 id="5-3-settings">5.3 Settings</h2>
+<p>Settings should be grouped into the following sections:</p>
+<p><strong>OpenRouter</strong></p>
+<ul>
+<li>API key.</li>
+<li>Test Connection.</li>
+<li>Transcription model.</li>
+<li>Summary model.</li>
+<li>API cost reporting.</li>
+</ul>
+<p><strong>Audio</strong></p>
+<ul>
+<li>Microphone selection.</li>
+<li>Include microphone toggle.</li>
+<li>Segment duration.</li>
+<li>Audio format.</li>
+<li>Language preference.</li>
+</ul>
+<p><strong>Storage</strong></p>
+<ul>
+<li>Audio retention policy.</li>
+<li>Clear meeting history.</li>
+<li>Export data.</li>
+<li>Delete all locally stored data.</li>
+</ul>
+<p><strong>AI</strong></p>
+<ul>
+<li>Default summary template.</li>
+<li>Summary language.</li>
+<li>Custom summary instructions.</li>
+</ul>
+<hr>
+<h1 id="6-technical-architecture">6. Technical Architecture</h1>
+<h2 id="6-1-architecture-overview">6.1 Architecture Overview</h2>
+<p>The application will consist of five independent subsystems:</p>
+<ol>
+<li>Browser integration and session lifecycle.</li>
+<li>Audio acquisition and processing.</li>
+<li>Transcription API integration.</li>
+<li>Local persistence.</li>
+<li>AI summarisation and presentation.</li>
+</ol>
+<p>The architecture must not depend on Google Meet's internal DOM structure for audio capture.</p>
+<h3 id="high-level-data-flow">High-Level Data Flow</h3>
+<pre data-lang="text"><code>Google Meet Browser Tab
+         |
+         v
+Chrome Tab Capture API
+         |
+         +------------------+
+         |                  |
+         v                  v
+Remote Meeting Audio    Local Microphone
+         |                  |
+         +---------+--------+
+                   |
+                   v
+             Audio Pipeline
+                   |
+             Segment Encoder
+                   |
+             Local Segment Queue
+                   |
+                   v
+         OpenRouter STT Endpoint
+                   |
+                   v
+           Transcript Segments
+                   |
+                   v
+             Local Storage
+                   |
+          +--------+--------+
+          |                 |
+          v                 v
+    Transcript UI      OpenRouter LLM
+                            |
+                            v
+                      Meeting Summary
+                            |
+                            v
+                        Export UI</code></pre>
+<h2 id="6-2-technology-stack">6.2 Technology Stack</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+<tbody>
+<tr><td>Language</td><td>TypeScript</td></tr>
+<tr><td>Extension platform</td><td>Chrome Manifest V3</td></tr>
+<tr><td>Build system</td><td>Vite + CRXJS or equivalent maintained tooling</td></tr>
+<tr><td>UI</td><td>React</td></tr>
+<tr><td>Styling</td><td>Tailwind CSS</td></tr>
+<tr><td>State management</td><td>Zustand or lightweight equivalent</td></tr>
+<tr><td>Audio capture</td><td><code>chrome.tabCapture</code></td></tr>
+<tr><td>Microphone capture</td><td><code>getUserMedia</code></td></tr>
+<tr><td>Audio processing</td><td>Web Audio API</td></tr>
+<tr><td>Audio encoding</td><td>MediaRecorder, with conversion where required</td></tr>
+<tr><td>Background capture</td><td>Chrome Offscreen Document</td></tr>
+<tr><td>Database</td><td>IndexedDB</td></tr>
+<tr><td>Database wrapper</td><td>Dexie</td></tr>
+<tr><td>Settings</td><td><code>chrome.storage.local</code></td></tr>
+<tr><td>Speech-to-text</td><td>OpenRouter Audio Transcriptions API</td></tr>
+<tr><td>Summarisation</td><td>OpenRouter Chat Completions API</td></tr>
+<tr><td>Testing</td><td>Vitest + Playwright</td></tr>
+<tr><td>Package management</td><td>npm or pnpm</td></tr>
+</tbody></table></div>
+<h3 id="architecture-constraint">Architecture Constraint</h3>
+<p>Manifest V3 service workers are not persistent execution environments and must not directly own the media streams.</p>
+<p>Audio capture and recording must be managed by an offscreen document or another supported persistent extension context.</p>
+<p>The service worker should coordinate commands and lifecycle events.</p>
+<hr>
+<h1 id="7-audio-capture">7. Audio Capture</h1>
+<h2 id="7-1-google-meet-tab-audio">7.1 Google Meet Tab Audio</h2>
+<p>Use:</p>
+<p><code>chrome.tabCapture.getMediaStreamId()</code></p>
+<p>The stream ID is generated from a valid user gesture and passed to an offscreen document.</p>
+<p>The offscreen document redeems the stream ID using <code>getUserMedia</code>.</p>
+<p>Only audio should be captured.</p>
+<p>Once tab audio is captured, Chrome may stop its normal playback path. The extension must explicitly route the captured audio to an <code>AudioContext.destination</code> to maintain the user's ability to hear the meeting.</p>
+<p>This playback routing must not introduce audible echoes.</p>
+<h2 id="7-2-local-microphone">7.2 Local Microphone</h2>
+<p>The extension must separately capture the user's microphone.</p>
+<p>Use:</p>
+<p><code>navigator.mediaDevices.getUserMedia({ audio: true })</code></p>
+<p>The microphone must never be routed back to the speakers merely to support recording, because this can create feedback and echo.</p>
+<p>The user should be able to select a preferred microphone.</p>
+<p>Microphone access denial must be handled gracefully.</p>
+<p>If the user denies microphone permission, the application can continue with remote tab audio only, with a visible warning.</p>
+<h2 id="7-3-audio-stream-strategy">7.3 Audio Stream Strategy</h2>
+<p>The recommended approach is to retain two logically distinct channels:</p>
+<ul>
+<li>Remote meeting audio.</li>
+<li>Local microphone audio.</li>
+</ul>
+<p>The MVP may combine them into a single recording for transcription, but the architecture should preserve the possibility of separate transcription streams.</p>
+<p>Separate streams provide a useful advantage: the application can confidently label locally captured speech as <strong>You</strong>.</p>
+<p>However, it cannot reliably identify individual remote participants from a mixed tab-audio stream.</p>
+<p>When combining streams, use the Web Audio API and ensure that both sources share a consistent audio clock.</p>
+<p>Avoid introducing feedback by confusing the recording destination with the speaker playback destination.</p>
+<h2 id="7-4-audio-segmentation">7.4 Audio Segmentation</h2>
+<p>Initial target segment duration: <strong>20 seconds</strong>, configurable between 10 and 60 seconds.</p>
+<p>This is an engineering starting point, not a provider-imposed limit.</p>
+<p>Requirements:</p>
+<ul>
+<li>Assign a unique ID to every segment.</li>
+<li>Store its start time, end time, and sequence number.</li>
+<li>Preserve its encoded audio until transcription succeeds or the user deletes it.</li>
+<li>Detect missing segments.</li>
+<li>Queue segments when connectivity is unavailable.</li>
+<li>Avoid unbounded in-memory buffering.</li>
+<li>Support a small configurable overlap between segments if needed.</li>
+</ul>
+<p>If overlap is used, the stitching process must remove duplicate text without deleting legitimate repeated speech.</p>
+<p>A 20-second segment should not be assumed to produce an answer within exactly 20 seconds. Transcription is asynchronous and API latency will vary.</p>
+<h2 id="7-5-audio-format">7.5 Audio Format</h2>
+<p>Prefer a compressed audio format supported by the chosen transcription provider.</p>
+<p>Potential formats include:</p>
+<ul>
+<li>WebM/Opus.</li>
+<li>WAV.</li>
+<li>MP3.</li>
+</ul>
+<p>MediaRecorder output depends on browser support. Do not assume that selecting an arbitrary MIME type produces that encoding.</p>
+<p>At startup, verify encoder support using <code>MediaRecorder.isTypeSupported()</code>.</p>
+<p>The transcription model must accept the actual encoded audio format.</p>
+<p>If conversion is required, perform it in a worker or appropriate processing context without blocking the interface.</p>
+<hr>
+<h1 id="8-openrouter-integration">8. OpenRouter Integration</h1>
+<h2 id="8-1-api-authentication">8.1 API Authentication</h2>
+<p>Use the user's OpenRouter API key.</p>
+<p>The key must never be:</p>
+<ul>
+<li>Included in source control.</li>
+<li>Embedded in a public extension build.</li>
+<li>Added to application logs.</li>
+<li>Included in exported transcripts.</li>
+<li>Sent to any unrelated service.</li>
+</ul>
+<p>For the personal-use MVP, support a user-supplied key stored locally with clear disclosure of the security trade-off.</p>
+<p>Chrome extension storage is not a secure hardware vault. For a commercial release, consider a backend token broker or another stronger credential-management strategy.</p>
+<h2 id="8-2-transcription-endpoint">8.2 Transcription Endpoint</h2>
+<p><strong>Endpoint</strong></p>
+<p><code>POST https://openrouter.ai/api/v1/audio/transcriptions</code></p>
+<p><strong>Authentication</strong></p>
+<p>Bearer token.</p>
+<p><strong>Initial default model</strong></p>
+<p><code>openai/whisper-1</code></p>
+<p>The model should be configurable rather than hardcoded.</p>
+<p>Potential alternatives include:</p>
+<ul>
+<li><code>openai/whisper-large-v3</code></li>
+<li><code>openai/whisper-large-v3-turbo</code></li>
+</ul>
+<p>The application should query the available transcription models using OpenRouter's model catalog with the <code>output_modalities=transcription</code> filter.</p>
+<p>Model availability, pricing, accepted formats, and timestamp capabilities must be validated rather than assumed.</p>
+<h2 id="8-3-example-request">8.3 Example Request</h2>
+<pre data-lang="json"><code>{
+  &quot;model&quot;: &quot;openai/whisper-1&quot;,
+  &quot;input_audio&quot;: {
+    &quot;data&quot;: &quot;&lt;BASE64_AUDIO&gt;&quot;,
+    &quot;format&quot;: &quot;webm&quot;
+  },
+  &quot;language&quot;: &quot;en&quot;,
+  &quot;response_format&quot;: &quot;verbose_json&quot;
+}</code></pre>
+<p>The requested format must match the actual audio format and model/provider capability.</p>
+<p>If a provider does not support <code>verbose_json</code>, the extension should either select a compatible provider/model or fall back to a plain-text transcription response with reduced timestamp functionality.</p>
+<h2 id="8-4-api-response-processing">8.4 API Response Processing</h2>
+<p>For every transcription response:</p>
+<ol>
+<li>Validate the HTTP status.</li>
+<li>Validate the response structure.</li>
+<li>Extract text.</li>
+<li>Extract timestamps if returned.</li>
+<li>Extract usage and cost data if available.</li>
+<li>Associate the response with its original audio segment.</li>
+<li>Persist the result.</li>
+<li>Update the user interface.</li>
+</ol>
+<p>Use audio-segment IDs to avoid inserting duplicate transcript content after request retries.</p>
+<h2 id="8-5-timeout-handling">8.5 Timeout Handling</h2>
+<p>The current OpenRouter transcription endpoint has an upstream processing timeout of approximately 60 seconds.</p>
+<p>The implementation must use short segments and handle timeouts explicitly.</p>
+<p>A timeout should not cause an audio segment to be lost.</p>
+<p>Retry policy:</p>
+<ul>
+<li>Retry transient HTTP and network errors.</li>
+<li>Respect <code>Retry-After</code> responses where provided.</li>
+<li>Use exponential backoff with jitter.</li>
+<li>Limit automatic retries.</li>
+<li>Allow manual retry of failed segments.</li>
+</ul>
+<p>Authentication and invalid-request errors should be surfaced to the user without repeated futile retries.</p>
+<h2 id="8-6-cost-tracking">8.6 Cost Tracking</h2>
+<p>Store per-request usage information whenever the provider returns it.</p>
+<p>Display:</p>
+<ul>
+<li>Total audio duration processed.</li>
+<li>Number of requests.</li>
+<li>Transcription expenditure.</li>
+<li>Summary expenditure.</li>
+<li>Combined meeting cost.</li>
+</ul>
+<p>The app should support an optional soft spending limit, with a warning before exceeding the configured budget.</p>
+<p>The application must not invent exact costs when an API response does not provide them.</p>
+<hr>
+<h1 id="9-transcript-processing">9. Transcript Processing</h1>
+<h2 id="9-1-transcript-segment-structure">9.1 Transcript Segment Structure</h2>
+<p>Each transcript segment should include:</p>
+<pre data-lang="ts"><code>interface TranscriptSegment {
+  id: string;
+  meetingId: string;
+  audioSegmentId: string;
+  sequence: number;
+  startMs: number;
+  endMs: number;
+  text: string;
+  source: &quot;tab&quot; | &quot;microphone&quot; | &quot;mixed&quot;;
+  speakerId?: string;
+  status: &quot;completed&quot; | &quot;edited&quot;;
+  modelId: string;
+}</code></pre>
+<p>The timing fields must distinguish captured audio timing from speech-level timestamps.</p>
+<p>If only chunk-level timing is available, the interface must not present approximate timing as exact word timing.</p>
+<h2 id="9-2-transcript-stitching">9.2 Transcript Stitching</h2>
+<p>Segment results may arrive out of order.</p>
+<p>The transcript assembler must:</p>
+<ul>
+<li>Sort results by capture sequence.</li>
+<li>Preserve chronological order.</li>
+<li>Detect missing segments.</li>
+<li>Handle partial transcription failures.</li>
+<li>Remove duplicate boundary text when overlaps occur.</li>
+<li>Preserve punctuation and meaningful repetitions.</li>
+<li>Avoid using an LLM to silently rewrite the original transcript.</li>
+</ul>
+<p>The canonical transcript should remain as close as practical to the transcription model's output.</p>
+<h2 id="9-3-transcript-editing">9.3 Transcript Editing</h2>
+<p>The user must be able to edit transcript text.</p>
+<p>Edited content should be stored separately from the original model output or tracked with revision metadata.</p>
+<p>The app must not overwrite user edits during reprocessing.</p>
+<hr>
+<h1 id="10-ai-meeting-summaries">10. AI Meeting Summaries</h1>
+<h2 id="10-1-summary-generation">10.1 Summary Generation</h2>
+<p>After transcription, the user can select <strong>Generate Summary</strong>.</p>
+<p>The extension sends the completed transcript to a configurable text LLM through OpenRouter.</p>
+<p>The summary model is independent of the transcription model.</p>
+<h2 id="10-2-required-summary-structure">10.2 Required Summary Structure</h2>
+<p>The default summary should include:</p>
+<h3 id="executive-summary">Executive Summary</h3>
+<p>A concise overview of the meeting.</p>
+<h3 id="main-discussion-points">Main Discussion Points</h3>
+<p>Important subjects discussed.</p>
+<h3 id="decisions">Decisions</h3>
+<p>Explicit decisions agreed during the meeting.</p>
+<h3 id="action-items">Action Items</h3>
+<p>Each action item should contain:</p>
+<ul>
+<li>Task description.</li>
+<li>Owner, when identified.</li>
+<li>Due date, when stated.</li>
+<li>Status, if relevant.</li>
+<li>Supporting transcript reference when available.</li>
+</ul>
+<h3 id="open-questions">Open Questions</h3>
+<p>Unanswered questions requiring further discussion.</p>
+<h3 id="follow-up-recommendations">Follow-Up Recommendations</h3>
+<p>Potential next steps, clearly separated from actions that were explicitly agreed.</p>
+<h2 id="10-3-accuracy-requirements">10.3 Accuracy Requirements</h2>
+<p>The summarisation model must:</p>
+<ul>
+<li>Avoid inventing decisions.</li>
+<li>Avoid assigning owners without evidence.</li>
+<li>Avoid fabricating due dates.</li>
+<li>Distinguish suggestions from confirmed commitments.</li>
+<li>Mark uncertain information appropriately.</li>
+<li>Cite the relevant transcript passage or segment where possible.</li>
+</ul>
+<h2 id="10-4-long-transcript-support">10.4 Long Transcript Support</h2>
+<p>Long meetings may exceed a summarisation model's context window.</p>
+<p>Implement a hierarchical summarisation process:</p>
+<ol>
+<li>Divide the transcript into logical sections.</li>
+<li>Extract structured facts from each section.</li>
+<li>Merge recurring topics and duplicate actions.</li>
+<li>Produce the final summary.</li>
+<li>Preserve references to the original transcript.</li>
+</ol>
+<p>Summaries must be regenerated after significant manual transcript edits if the user requests it.</p>
+<hr>
+<h1 id="11-local-data-storage">11. Local Data Storage</h1>
+<h2 id="11-1-storage-technology">11.1 Storage Technology</h2>
+<p>Use IndexedDB through Dexie or a comparable wrapper.</p>
+<p>Avoid using <code>chrome.storage.local</code> to store large audio blobs.</p>
+<h2 id="11-2-data-entities">11.2 Data Entities</h2>
+<h3 id="meeting">Meeting</h3>
+<pre data-lang="ts"><code>interface Meeting {
+  id: string;
+  title: string;
+  startedAt: string;
+  endedAt?: string;
+  status:
+    | &quot;active&quot;
+    | &quot;processing&quot;
+    | &quot;completed&quot;
+    | &quot;interrupted&quot;;
+  language?: string;
+  transcriptionModel: string;
+  summaryModel?: string;
+  totalCostUsd: number;
+}</code></pre>
+<h3 id="audio-segment">Audio Segment</h3>
+<pre data-lang="ts"><code>interface AudioSegment {
+  id: string;
+  meetingId: string;
+  sequence: number;
+  startMs: number;
+  endMs: number;
+  source: &quot;tab&quot; | &quot;microphone&quot; | &quot;mixed&quot;;
+  mimeType: string;
+  blob?: Blob;
+  status:
+    | &quot;pending&quot;
+    | &quot;processing&quot;
+    | &quot;completed&quot;
+    | &quot;failed&quot;;
+  attempts: number;
+}</code></pre>
+<h3 id="meeting-summary">Meeting Summary</h3>
+<pre data-lang="ts"><code>interface MeetingSummary {
+  id: string;
+  meetingId: string;
+  model: string;
+  generatedAt: string;
+  executiveSummary: string;
+  discussionPoints: string[];
+  decisions: string[];
+  actionItems: ActionItem[];
+  openQuestions: string[];
+}</code></pre>
+<h2 id="11-3-retention-policy">11.3 Retention Policy</h2>
+<p>Default behaviour:</p>
+<ul>
+<li>Retain transcripts and summaries locally.</li>
+<li>Retain raw audio only while necessary for transcription and enabled retries.</li>
+<li>Delete successfully processed audio after a configurable retention period.</li>
+<li>Allow users to opt into longer audio retention.</li>
+<li>Provide a clear Delete Meeting operation.</li>
+<li>Provide Delete All Data.</li>
+</ul>
+<p>Audio retention and transcript retention must be independently configurable.</p>
+<p>On deletion, remove data from local stores and any application-controlled temporary queues.</p>
+<hr>
+<h1 id="12-extension-structure">12. Extension Structure</h1>
+<p>Recommended directory layout:</p>
+<pre data-lang="text"><code>meetscribe/
+├── public/
+│   ├── manifest.json
+│   └── icons/
+│
+├── src/
+│   ├── background/
+│   │   ├── service-worker.ts
+│   │   └── session-manager.ts
+│   │
+│   ├── capture/
+│   │   ├── offscreen.html
+│   │   ├── offscreen.ts
+│   │   ├── tab-audio.ts
+│   │   ├── microphone.ts
+│   │   ├── audio-pipeline.ts
+│   │   └── segment-recorder.ts
+│   │
+│   ├── api/
+│   │   ├── openrouter-client.ts
+│   │   ├── transcription.ts
+│   │   ├── summarization.ts
+│   │   └── models.ts
+│   │
+│   ├── transcript/
+│   │   ├── assembler.ts
+│   │   ├── normalization.ts
+│   │   └── export.ts
+│   │
+│   ├── storage/
+│   │   ├── database.ts
+│   │   ├── repositories.ts
+│   │   └── migrations.ts
+│   │
+│   ├── popup/
+│   │   ├── Popup.tsx
+│   │   └── components/
+│   │
+│   ├── dashboard/
+│   │   ├── Dashboard.tsx
+│   │   └── components/
+│   │
+│   ├── settings/
+│   │   └── Settings.tsx
+│   │
+│   ├── shared/
+│   │   ├── types.ts
+│   │   ├── messages.ts
+│   │   └── constants.ts
+│   │
+│   └── tests/
+│
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md</code></pre>
+<p>The exact build structure may change to accommodate the selected extension bundler.</p>
+<hr>
+<h1 id="13-browser-permissions">13. Browser Permissions</h1>
+<p>The initial Manifest V3 configuration should request only the permissions actually necessary.</p>
+<p>Expected permissions include:</p>
+<ul>
+<li><code>activeTab</code></li>
+<li><code>tabCapture</code></li>
+<li><code>offscreen</code></li>
+<li><code>storage</code></li>
+</ul>
+<p>Potentially required:</p>
+<ul>
+<li><code>scripting</code>, if the product later adds an in-meeting interface.</li>
+<li>Host access to <code>meet.google.com</code> for meeting detection or contextual features.</li>
+<li>Host access to <code>openrouter.ai</code> for API requests.</li>
+</ul>
+<p>Additional permissions must be justified individually.</p>
+<p>The extension must not request unrestricted browsing-history access or access to unrelated websites.</p>
+<p>A visible extension surface should be responsible for obtaining microphone permission where needed before handing the stream or capture process to the supported recording context.</p>
+<hr>
+<h1 id="14-session-lifecycle">14. Session Lifecycle</h1>
+<p>Implement an explicit session state machine.</p>
+<p>States:</p>
+<pre data-lang="text"><code>IDLE
+  |
+  v
+INITIALIZING
+  |
+  v
+CAPTURING &lt;------ RESUMING
+  |                ^
+  v                |
+PAUSED ------------+
+  |
+  v
+STOPPING
+  |
+  v
+PROCESSING
+  |
+  v
+COMPLETED</code></pre>
+<p>Error and interruption states should be handled separately.</p>
+<h2 id="lifecycle-requirements">Lifecycle Requirements</h2>
+<p>The application must:</p>
+<ul>
+<li>Prevent duplicate active sessions for the same tab.</li>
+<li>Detect media track termination.</li>
+<li>Detect when the meeting tab closes.</li>
+<li>Detect microphone disconnection.</li>
+<li>Handle temporary network failures.</li>
+<li>Recover queued work after service-worker suspension.</li>
+<li>Recover durable data after browser restart.</li>
+<li>Clearly distinguish active capture from post-meeting processing.</li>
+</ul>
+<p>A browser restart cannot automatically restore an interrupted live media stream without an appropriate new user action. The application should preserve existing data and mark the session as interrupted.</p>
+<hr>
+<h1 id="15-error-handling">15. Error Handling</h1>
+<div class="tablewrap"><table>
+<thead><tr><th>Scenario</th><th>Expected behaviour</th></tr></thead>
+<tbody>
+<tr><td>Missing API key</td><td>Show configuration prompt</td></tr>
+<tr><td>Invalid API key</td><td>Stop API calls and display error</td></tr>
+<tr><td>Insufficient API credit</td><td>Preserve local data and request account action</td></tr>
+<tr><td>Microphone denied</td><td>Offer tab-audio-only capture</td></tr>
+<tr><td>Tab capture denied</td><td>Explain required permissions</td></tr>
+<tr><td>Unsupported audio format</td><td>Offer conversion or compatible model</td></tr>
+<tr><td>API timeout</td><td>Retry with bounded backoff</td></tr>
+<tr><td>API rate limit</td><td>Respect retry delay and queue segments</td></tr>
+<tr><td>Internet disconnected</td><td>Save audio segments locally</td></tr>
+<tr><td>Browser restarted</td><td>Preserve data and mark interrupted session</td></tr>
+<tr><td>Meet tab closed</td><td>Stop capture and process buffered data</td></tr>
+<tr><td>Model unavailable</td><td>Offer another model</td></tr>
+<tr><td>Storage quota exceeded</td><td>Stop safely, warn user, and preserve existing data where possible</td></tr>
+<tr><td>Transcript generation fails</td><td>Preserve audio for retry</td></tr>
+<tr><td>Summary generation fails</td><td>Keep completed transcript intact</td></tr>
+</tbody></table></div>
+<p>Errors must never silently discard data.</p>
+<p>The UI should distinguish recoverable problems from permanent failures.</p>
+<hr>
+<h1 id="16-privacy-security-and-consent">16. Privacy, Security, and Consent</h1>
+<h2 id="16-1-privacy-model">16.1 Privacy Model</h2>
+<p>The application should follow a local-first design.</p>
+<p>By default:</p>
+<ul>
+<li>Audio is captured locally.</li>
+<li>Audio is sent only to the configured transcription service when processing is enabled.</li>
+<li>Transcripts remain local.</li>
+<li>Summaries are generated only when requested, unless the user enables automatic summaries.</li>
+<li>No user analytics are collected without consent.</li>
+</ul>
+<p>Note: Sending audio to OpenRouter makes this a third-party processing workflow, not a completely offline solution.</p>
+<p>The actual upstream model provider may also receive the audio. The product must explain this clearly.</p>
+<h2 id="16-2-meeting-consent">16.2 Meeting Consent</h2>
+<p>The extension must not encourage covert transcription.</p>
+<p>Before starting, display a reminder that users are responsible for informing participants and obtaining necessary consent.</p>
+<p>The extension must not attempt to hide Chrome's capture indicators or circumvent Google Meet's controls.</p>
+<p>For business use, the implementation should consider GDPR and any applicable contractual, employment, confidentiality, and data-protection requirements.</p>
+<h2 id="16-3-api-data-policies">16.3 API Data Policies</h2>
+<p>Where available, offer configuration of OpenRouter data-handling preferences, including zero-data-retention-compatible routes.</p>
+<p>Do not claim a zero-retention guarantee unless the selected provider and its current policies support it.</p>
+<h2 id="16-4-security-requirements">16.4 Security Requirements</h2>
+<ul>
+<li>No hardcoded credentials.</li>
+<li>No remote executable code in the extension.</li>
+<li>Restrictive content security policy.</li>
+<li>HTTPS API connections.</li>
+<li>No transcript data in routine diagnostic logs.</li>
+<li>Sanitize rendered transcript content.</li>
+<li>Protect against cross-site scripting.</li>
+<li>Minimise host permissions.</li>
+<li>Avoid exposing API keys through content scripts.</li>
+<li>Provide secure key replacement and clearing.</li>
+<li>Validate all API responses and inter-context messages.</li>
+</ul>
+<hr>
+<h1 id="17-export-requirements">17. Export Requirements</h1>
+<h2 id="17-1-plain-text">17.1 Plain Text</h2>
+<p>Export a readable transcript containing:</p>
+<ul>
+<li>Meeting title.</li>
+<li>Date.</li>
+<li>Start time.</li>
+<li>Duration.</li>
+<li>Transcript with timestamps where available.</li>
+</ul>
+<h2 id="17-2-markdown">17.2 Markdown</h2>
+<p>Include metadata, transcript, and optional AI summary.</p>
+<p>Example:</p>
+<pre data-lang="markdown"><code># Product Planning Meeting
+
+Date: 2026-11-03
+Duration: 42 minutes
+
+## Transcript
+
+[00:00:15] Speaker:
+We need to agree on the project scope.
+
+[00:00:28] You:
+I can prepare the first draft.
+
+## Decisions
+
+- Complete scope review this week.
+
+## Action Items
+
+- Prepare project scope.
+  Owner: You
+  Due: Not specified</code></pre>
+<h2 id="17-3-json">17.3 JSON</h2>
+<p>Provide structured JSON export for integration with other systems.</p>
+<p>JSON should contain stable IDs, meeting metadata, transcript segments, timestamps, summaries, and action items.</p>
+<p>Do not export API credentials or raw audio by default.</p>
+<hr>
+<h1 id="18-testing-strategy">18. Testing Strategy</h1>
+<h2 id="18-1-unit-tests">18.1 Unit Tests</h2>
+<p>Cover:</p>
+<ul>
+<li>Transcript assembly.</li>
+<li>Segment ordering.</li>
+<li>Overlap handling.</li>
+<li>Cost calculation.</li>
+<li>State transitions.</li>
+<li>API response parsing.</li>
+<li>Storage operations.</li>
+<li>Export generation.</li>
+</ul>
+<h2 id="18-2-integration-tests">18.2 Integration Tests</h2>
+<p>Use mocked OpenRouter API responses to test:</p>
+<ul>
+<li>Successful transcription.</li>
+<li>Timeouts.</li>
+<li>Invalid credentials.</li>
+<li>Rate limiting.</li>
+<li>Missing timestamp data.</li>
+<li>Partial transcription failure.</li>
+<li>Repeated and out-of-order responses.</li>
+</ul>
+<h2 id="18-3-manual-google-meet-tests">18.3 Manual Google Meet Tests</h2>
+<p>Test the extension in actual Google Meet sessions using a Google Workspace Business Starter account.</p>
+<p>Required scenarios:</p>
+<ol>
+<li>Two-participant meeting.</li>
+<li>Multiple participants.</li>
+<li>Microphone muted and unmuted.</li>
+<li>Headphones connected.</li>
+<li>Audio output device changed.</li>
+<li>Microphone disconnected mid-meeting.</li>
+<li>Long periods of silence.</li>
+<li>Participants talking simultaneously.</li>
+<li>Changing browser tabs.</li>
+<li>Meeting tab closure.</li>
+<li>Network interruption.</li>
+<li>Browser restart.</li>
+<li>Thirty-minute meeting.</li>
+<li>Ninety-minute meeting.</li>
+<li>Two-hour meeting.</li>
+<li>English-language meeting.</li>
+<li>Portuguese-language meeting.</li>
+<li>Mixed English and Portuguese speech.</li>
+</ol>
+<h2 id="18-4-reliability-targets">18.4 Reliability Targets</h2>
+<p>Initial engineering targets:</p>
+<ul>
+<li>No loss of successfully persisted audio segments.</li>
+<li>No duplicate transcript segments after retries.</li>
+<li>No significant user-perceived disruption to Meet audio.</li>
+<li>No microphone feedback.</li>
+<li>Successful recovery of queued audio after a temporary API outage.</li>
+<li>Successful transcript export after an interrupted session.</li>
+<li>Bounded memory usage during a two-hour meeting.</li>
+<li>Clear and accurate capture-state indicators.</li>
+</ul>
+<p>These are acceptance targets to verify, not guaranteed properties of the underlying browser or speech models.</p>
+<hr>
+<h1 id="19-acceptance-criteria">19. Acceptance Criteria</h1>
+<p>The MVP is complete when all the following conditions are satisfied.</p>
+<h3 id="ac-01-google-workspace-compatibility">AC-01 — Google Workspace Compatibility</h3>
+<p>A user with Google Workspace Business Starter can start transcription from a normal Google Meet session without activating Google Meet's native recording or transcription features.</p>
+<h3 id="ac-02-audio-capture">AC-02 — Audio Capture</h3>
+<p>Remote audio and local microphone speech can both be captured.</p>
+<h3 id="ac-03-meeting-usability">AC-03 — Meeting Usability</h3>
+<p>Starting the extension does not prevent the user from hearing or speaking in Google Meet.</p>
+<h3 id="ac-04-transcription">AC-04 — Transcription</h3>
+<p>Audio segments are successfully sent to a selected compatible OpenRouter speech-to-text model and returned as text.</p>
+<h3 id="ac-05-transcript-completeness">AC-05 — Transcript Completeness</h3>
+<p>All successfully captured segments are either transcribed or explicitly marked as failed or pending.</p>
+<h3 id="ac-06-long-meetings">AC-06 — Long Meetings</h3>
+<p>A 90-minute meeting can be processed without uncontrolled growth of memory usage or loss of persisted segments.</p>
+<h3 id="ac-07-error-recovery">AC-07 — Error Recovery</h3>
+<p>Temporary network or transcription failures do not erase already captured segments.</p>
+<h3 id="ac-08-export">AC-08 — Export</h3>
+<p>Users can export completed transcripts as TXT and Markdown.</p>
+<h3 id="ac-09-ai-summary">AC-09 — AI Summary</h3>
+<p>The extension can generate a meeting summary using a selected OpenRouter text model.</p>
+<h3 id="ac-10-local-storage">AC-10 — Local Storage</h3>
+<p>Meetings and transcripts remain accessible after closing and reopening Chrome.</p>
+<h3 id="ac-11-transparency">AC-11 — Transparency</h3>
+<p>Users can see when audio capture is active and stop it immediately.</p>
+<h3 id="ac-12-cost-visibility">AC-12 — Cost Visibility</h3>
+<p>The application displays actual API usage costs when provided by OpenRouter.</p>
+<h3 id="ac-13-cleanup">AC-13 — Cleanup</h3>
+<p>Users can permanently remove stored meeting data from application-controlled storage.</p>
+<hr>
+<h1 id="20-development-phases">20. Development Phases</h1>
+<h2 id="phase-1-technical-proof-of-concept">Phase 1 — Technical Proof of Concept</h2>
+<p><strong>Objective:</strong> Validate the riskiest part of the architecture.</p>
+<p>Deliverables:</p>
+<ul>
+<li>Minimal Chrome extension.</li>
+<li>Google Meet tab detection.</li>
+<li>Tab audio capture.</li>
+<li>Microphone capture.</li>
+<li>Confirmed normal playback.</li>
+<li>Short local audio capture.</li>
+<li>Successful OpenRouter transcription.</li>
+</ul>
+<p>Exit requirement: Record and accurately transcribe a short two-person test conversation, including both the local microphone and remote participant.</p>
+<h2 id="phase-2-functional-mvp">Phase 2 — Functional MVP</h2>
+<p>Deliverables:</p>
+<ul>
+<li>Audio segmentation.</li>
+<li>Persistent segment queue.</li>
+<li>Automatic transcription.</li>
+<li>Transcript assembly.</li>
+<li>Basic extension UI.</li>
+<li>Meeting start/stop controls.</li>
+<li>Local transcript storage.</li>
+<li>TXT and Markdown exports.</li>
+<li>Basic settings.</li>
+</ul>
+<p>Exit requirement: A complete 30-minute meeting transcript is available and exportable.</p>
+<h2 id="phase-3-reliability-and-ai">Phase 3 — Reliability and AI</h2>
+<p>Deliverables:</p>
+<ul>
+<li>API retries.</li>
+<li>Cost tracking.</li>
+<li>Long-meeting validation.</li>
+<li>Summary generation.</li>
+<li>Decisions and action items.</li>
+<li>Meeting history.</li>
+<li>Improved failure recovery.</li>
+<li>Audio retention settings.</li>
+</ul>
+<p>Exit requirement: Successful 90-minute test meeting with recoverable failures and usable AI notes.</p>
+<h2 id="phase-4-release-preparation">Phase 4 — Release Preparation</h2>
+<p>Deliverables:</p>
+<ul>
+<li>Security review.</li>
+<li>Accessibility review.</li>
+<li>Browser compatibility testing.</li>
+<li>Automated regression tests.</li>
+<li>User documentation.</li>
+<li>Privacy disclosures.</li>
+<li>Chrome Web Store packaging.</li>
+</ul>
+<p>Exit requirement: A distributable Chrome extension suitable for a limited beta.</p>
+<hr>
+<h1 id="21-future-enhancements">21. Future Enhancements</h1>
+<p>Potential future releases may introduce:</p>
+<h3 id="speaker-recognition">Speaker Recognition</h3>
+<p>Use diarization to distinguish remote speakers and allow manual matching to participant names.</p>
+<h3 id="live-captions">Live Captions</h3>
+<p>Display short-latency transcription in a side panel or optional overlay, with clear distinction between provisional and final text.</p>
+<h3 id="searchable-knowledge-base">Searchable Knowledge Base</h3>
+<p>Enable semantic search across transcripts.</p>
+<h3 id="meeting-assistant">Meeting Assistant</h3>
+<p>Allow users to ask:</p>
+<ul>
+<li>What was decided?</li>
+<li>Which tasks were assigned to me?</li>
+<li>What topics remain unresolved?</li>
+<li>What did we say about a specific customer?</li>
+</ul>
+<h3 id="external-integrations">External Integrations</h3>
+<p>Potential destinations:</p>
+<ul>
+<li>Google Drive.</li>
+<li>Google Docs.</li>
+<li>Notion.</li>
+<li>Obsidian.</li>
+<li>Slack.</li>
+<li>Microsoft Teams.</li>
+<li>CRM systems.</li>
+</ul>
+<h3 id="custom-ai-templates">Custom AI Templates</h3>
+<p>Allow users to configure summaries for:</p>
+<ul>
+<li>Project meetings.</li>
+<li>Client calls.</li>
+<li>Sales discovery.</li>
+<li>Technical reviews.</li>
+<li>Interviews.</li>
+<li>Product planning.</li>
+</ul>
+<h3 id="multi-provider-transcription">Multi-Provider Transcription</h3>
+<p>Support direct transcription through additional providers or local speech-to-text engines.</p>
+<hr>
+<h1 id="22-implementation-guidance-for-an-ai-coding-agent">22. Implementation Guidance for an AI Coding Agent</h1>
+<p>The following development principles must be applied throughout implementation.</p>
+<ol>
+<li>Use TypeScript with strict type checking.</li>
+<li>Follow Chrome Manifest V3 requirements.</li>
+<li>Do not rely on persistent service-worker execution.</li>
+<li>Separate media capture from API processing.</li>
+<li>Persist audio segments before transmitting them.</li>
+<li>Never discard audio solely because an API request failed.</li>
+<li>Keep all external API integrations behind typed interfaces.</li>
+<li>Make transcription and summarisation models configurable.</li>
+<li>Use IndexedDB for large, durable data.</li>
+<li>Avoid unnecessary backend infrastructure.</li>
+<li>Do not depend on undocumented Google Meet internals.</li>
+<li>Never inject remote executable JavaScript.</li>
+<li>Design for recoverability and clear error states.</li>
+<li>Include automated tests for critical modules.</li>
+<li>Implement capture permissions and consent disclosures transparently.</li>
+<li>Do not invent speaker identities or exact timestamps.</li>
+<li>Do not silently modify the canonical transcript using an LLM.</li>
+<li>Do not introduce unnecessary authentication or cloud services.</li>
+</ol>
+<p>Build and validate incrementally, beginning with tab capture, microphone capture, normal audio playback, and one successful transcription request.</p>
+<p>Do not begin advanced features until the audio pipeline has been tested in an actual Google Meet session.</p>
+<hr>
+<h1 id="23-definition-of-success">23. Definition of Success</h1>
+<p>MeetScribe is successful when a Google Workspace Business Starter user can:</p>
+<ol>
+<li>Join a normal Google Meet meeting.</li>
+<li>Click the extension to start transcription.</li>
+<li>Participate normally without using Google Meet recording.</li>
+<li>Capture the conversation, including their own speech.</li>
+<li>Receive a complete text transcript through OpenRouter.</li>
+<li>Generate useful meeting notes with an LLM.</li>
+<li>Export and retain the information locally.</li>
+<li>Repeat the process reliably, without managing external infrastructure.</li>
+</ol>
+<p><strong>The primary success measure is reliable, low-friction transcription rather than the number of AI features.</strong></p>
+<hr>
+<h1 id="24-recommended-first-development-milestone">24. Recommended First Development Milestone</h1>
+<p>Implement only the following initial workflow:</p>
+<p><strong>Start Capture → Capture Tab + Microphone → Save a Short Audio Segment → Send to OpenRouter → Display Transcript</strong></p>
+<p>Use a fixed speech-to-text model for this first technical test.</p>
+<p>Do not implement diarization, meeting history, summarisation, or complex settings until this path works reliably.</p>
+<p>Once the audio pipeline is proven, build the remaining functionality around it.</p>
+<p><strong>End of implementation brief — version 1.0.</strong></p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="../../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../../review/index.html">Review of v1.0</a>
+    <a href="../../brief/index.html">Brief v2.0</a>
+    <a href="../../plan/index.html">Plan</a>
+    <a href="../../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../../sources/index.html">Sources</a>
+    <a href="../../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>
