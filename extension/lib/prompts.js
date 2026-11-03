@@ -9,7 +9,8 @@ export const DEBRIEF_PROMPT = `Write a debrief of the meeting transcript you hav
 
 Each transcript line is "[time] Speaker: text". "You" is the person who recorded the meeting, from their own
 microphone. "Meeting" is everyone else in the call, from the call's audio: it is not one person, and the
-transcript does not say who in the call said what. Lines marked "(not transcribed)" are gaps.
+transcript does not say who in the call said what. Lines marked "(not transcribed)" are gaps. A "You" line
+marked as possibly the microphone hearing the call may be a genuine reply: treat it as uncertain, not as absent.
 
 Structure it exactly as:
 

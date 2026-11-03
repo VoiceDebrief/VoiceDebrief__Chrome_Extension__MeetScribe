@@ -26,6 +26,8 @@ const PAGES = [
     description: 'The reality file: what exists in the extension, how it is tested, what is not built yet, and what building it corrected in the brief.' },
   { path: 'voicedebrief', nav: 'VoiceDebrief', title: 'MeetScribe and VoiceDebrief',
     description: 'How MeetScribe lines up with voicedebrief.ai: the same key, the same words about where audio goes, the same artefacts and colours, and the path for its code into the website.' },
+  { path: 'reviews',   nav: 'Reviews',   title: 'Reviews of MeetScribe, and what happened to each finding',
+    description: 'Every review of MeetScribe as received, with a status for each finding: the v0.3.1 code review (18 findings) and the first real call.' },
   { path: 'review',    nav: 'Review',    title: 'Review of the MeetScribe brief v1.0',
     description: 'The ChatGPT-drafted MeetScribe brief checked claim by claim: 14 facts that hold, 6 choices that fail silently, 11 gaps, 6 changes, with evidence.' },
   { path: 'brief',     nav: 'Brief v2.0', title: 'MeetScribe brief v2.0',
@@ -221,6 +223,7 @@ ${crumb}${body}
   </div>
   <div>
     <h4>Record</h4>
+    <a href="${up}reviews/index.html">Reviews and findings</a>
     <a href="${up}sources/index.html">Sources</a>
     <a href="${up}versions/index.html">Release history</a>
     <a href="${up}brief/v1/index.html">Brief v1.0, as received</a>

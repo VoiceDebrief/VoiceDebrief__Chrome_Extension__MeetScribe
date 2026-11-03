@@ -170,9 +170,15 @@ describe('the debrief, aligned with voicedebrief.ai', () => {
     ...linesFromResult(seg(), { text: 'We ship on Friday', segments: null }, 'm'),
     ...linesFromResult(seg({ id: 's2', channel: 'mic', startMs: 100, endMs: 4000 }), { text: 'we ship on friday', segments: null }, 'm'),
     ...linesFromResult(seg({ id: 's3', channel: 'mic', startMs: 30000, endMs: 32000 }), { text: 'I will write the notes', segments: null }, 'm')]);
-  test('the model reads the transcript with times and labels; echoes are left out, gaps are named', () => {
+  test('finding 09: the model reads every line with times and labels; a probable echo is marked, not removed; gaps are named', () => {
     const t = transcriptForPrompt(items());
-    assert.equal(t, '[00:00:00] Meeting: We ship on Friday\n[00:00:30] You: I will write the notes\n[00:01:00] Meeting: (not transcribed: failed)');
+    assert.equal(t, '[00:00:00] Meeting: We ship on Friday\n[00:00:00] You: we ship on friday (may be the microphone hearing the Meeting line above)\n[00:00:30] You: I will write the notes\n[00:01:00] Meeting: (not transcribed: failed)');
+  });
+  test('finding 09: a genuine reply that repeats a question is still in the debrief input', () => {
+    const q = linesFromResult(seg({ id: 'q' }), { text: 'Can you send the report today?', segments: null }, 'm');
+    const a = linesFromResult(seg({ id: 'a', channel: 'mic', startMs: 2500, endMs: 4000 }), { text: 'I will send the report today', segments: null }, 'm');
+    const t = transcriptForPrompt(assemble([], [...q, ...a]));
+    assert.match(t, /You: I will send the report today/);
   });
   test('the prompt keeps voicedebrief.ai\'s sections and fills the reader\'s language and tone', () => {
     for (const h of ['## Key points', '## Actions', '## In one sentence', '## Decisions', '## Open questions']) assert.ok(DEBRIEF_PROMPT.includes(h), h);
@@ -191,5 +197,33 @@ describe('the debrief, aligned with voicedebrief.ai', () => {
     assert.ok(md.indexOf('## Debrief') < md.indexOf('## Transcript'));
     assert.match(md, /### Key points/);
     assert.match(md, /Written by a model, not a stenographer/);
+  });
+});
+
+describe('v0.3.1 review fixes, pure parts', () => {
+  test('15: model timestamps outside the audio are set aside, with the response kept', () => {
+    const body = (segs) => ({ text: 'a b', segments: segs, usage: {} });
+    assert.ok(parseTranscription(body([{ start: 0, end: 0.9, text: 'a' }]), null, 'verbose_json', 1).segments);
+    for (const bad of [[{ start: -9, end: 0.5, text: 'a' }], [{ start: 0.8, end: 0.2, text: 'a' }], [{ start: 0, end: 10000, text: 'a' }],
+                       [{ start: 0, end: 0.5, text: 'a' }, { start: 0.5, end: 3, text: 'b' }]]) {
+      const r = parseTranscription(body(bad), null, 'verbose_json', 1);
+      assert.equal(r.segments, null, JSON.stringify(bad)); assert.equal(r.timingRejected, true); assert.equal(r.text, 'a b');
+    }
+  });
+  test('14: only a format-capability 400 is a verbose_json fallback; any other 400 is that segment\'s failure', () => {
+    assert.equal(classify(400, 'response_format verbose_json is not supported by this model').kind, 'fallback-json');
+    assert.equal(classify(400, 'Unsupported language: xx').kind, 'fatal-segment');
+    assert.equal(classify(400, 'Request blocked by your guardrail policy').kind, 'fatal-segment');
+  });
+  test('08: a request that came back empty is a billed request, and a visible, retryable gap', () => {
+    const segs = [{ id: 'e', meetingId: 'm', channel: 'tab', startMs: 0, endMs: 3000, status: 'empty', costUsd: 0.0002, lastError: 'the model returned no text for this speech' }];
+    const c = costOf(segs); assert.equal(c.requests, 1); assert.equal(c.usd, 0.0002);
+    const items = assemble(segs, []);
+    assert.equal(items.length, 1); assert.equal(items[0].type, 'gap'); assert.equal(items[0].status, 'empty');
+    assert.match(transcriptForPrompt(items), /not transcribed: empty/);
+  });
+  test('13: a request gives up before its lease could expire', async () => {
+    const { REQUEST_TIMEOUT_MS } = await import('../extension/lib/openrouter.js');
+    assert.ok(REQUEST_TIMEOUT_MS < 180000 - 30000, 'the 180 s lease outlives the request with margin');
   });
 });

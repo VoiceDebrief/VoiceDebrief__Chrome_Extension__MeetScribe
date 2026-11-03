@@ -2,9 +2,11 @@
 
 Transcribes the Google Meet call you are in and writes the debrief: key points, decisions, actions, open questions. It runs as a Chrome extension on your own OpenRouter key. There is no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), and no server of ours. Your words are labelled **You**, everyone else's **Meeting**, and every point in the debrief carries the time of the line it came from.
 
-[Download MeetScribe v0.3.1 (zip, 44 KB)](releases/meetscribe-latest.zip)
+[Download MeetScribe v0.3.2 (zip, 52 KB)](releases/meetscribe-latest.zip)
 
-> **Beta, 3 November 2026.** This is the first build that anyone outside the project can try. It has been tested in Chromium with fake audio and replayed responses (45 automated tests), and **its first real Meet calls are being made now**. Expect rough edges, and please [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md).
+> **Beta: do not use it for confidential meetings.** Everything you transcribe is sent to OpenRouter, a third party, and what happens to it there is outside our control and our view. [Where your audio goes](#where-your-audio-goes) says exactly what that means.
+>
+> This build follows [a code review of 18 findings](reviews/index.md) and a fix from the first real call. It has been tested in Chromium with fake audio and replayed responses (61 automated tests), and **its first real Meet calls are being made now**. Expect rough edges, and please [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md).
 
 ![A meeting in MeetScribe: the debrief above the transcript, each point timed to its line (from the automated test, with synthetic audio, so the transcript repeats itself)](install/images/meetings.png)
 
@@ -12,8 +14,8 @@ Transcribes the Google Meet call you are in and writes the debrief: key points, 
 
 1. **Download and unzip** [the zip](releases/meetscribe-latest.zip). You get a folder called `meetscribe`.
 2. **Load it in Chrome.** Open `chrome://extensions`, switch on **Developer mode** (top right), press **Load unpacked** and pick the `meetscribe` folder. Pin **VoiceDebrief MeetScribe** to the toolbar.
-3. **Add your OpenRouter key.** The options page opens by itself. Paste a key and press **Test the key**. No key yet? [Get one in five steps](https://voicedebrief.ai/openrouter-key/), and **set a credit limit on it**: a few dollars is plenty.
-4. **In a Meet call,** click the MeetScribe icon while on the Meet tab. The side panel opens. Tell the others you are transcribing (there is a notice to copy into Meet's chat), tick the box, press **Start transcribing**.
+3. **Add your OpenRouter key.** The options page opens by itself. Paste a key and press **Save and test**. No key yet? [Get one in five steps](https://voicedebrief.ai/openrouter-key/), and **set a credit limit on it**: a few dollars is plenty.
+4. **In a Meet call,** go to the Meet tab and click the MeetScribe icon in Chrome's toolbar. That click is what lets Chrome capture the tab; the side panel opens and names the tab. Tell the others you are transcribing (there is a notice to copy into Meet's chat), tick the box, press **Start transcribing**.
 5. **After the call,** press **Stop**, open **Meetings**, and press **Write the debrief**. Export it as Markdown, text or JSON.
 
 Want your own voice transcribed as well? Press **Allow the microphone** on the options page once, then tick **Also transcribe my microphone** before you start. It has its own mute (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>), separate from Meet's. Use headphones, or your microphone will hear the call too.
@@ -32,17 +34,21 @@ Want your own voice transcribed as well? Press **Allow the microphone** on the o
 
 ## Where your audio goes
 
-Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. Do not use this for anything you would not hand to a third party.
+**On our side, everything is client-side.** MeetScribe has no server, no account and no analytics. Your meetings, transcripts, debriefs, the audio waiting to be sent and your key stay in this browser profile. They are stored like any extension's data, not encrypted, so anyone with access to your computer and Chrome profile can read them. **Delete all MeetScribe data** is on the options page; your key and settings are cleared separately.
 
-MeetScribe asks OpenRouter for zero-data-retention providers only. Everything else stays in your browser: the meetings, the transcripts, the debriefs, the audio waiting to be sent, and your key. There is no account, no analytics and no server of ours. **Delete all MeetScribe data** is on the options page.
+**Once audio leaves your browser, it is out of our hands.** Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. We cannot see or verify who processes it, whether it is kept, or for how long.
+
+MeetScribe asks OpenRouter for zero-data-retention routing. That is a request, applied according to your OpenRouter account's own settings, which we cannot see. It is not a guarantee we can give, so please don't read it as one.
+
+**So, during the beta: treat everything you transcribe as shared with a third party, and do not use MeetScribe for anything confidential.**
 
 **Consent is yours to get.** Meet's own recording tells everyone in the call; MeetScribe cannot, so it asks you to, every meeting. Recording or transcribing people without their consent is unlawful in some places.
 
 ## What to expect
 
 - **It listens only while you can see it listening.** The icon shows **REC**, Chrome shows its own capture indicator, and Stop is one click away. Closing the Meet tab also stops it.
-- **Nothing is lost quietly.** Every stretch of speech is saved before it is sent. If the network drops or the key runs out, it waits and retries. Anything that failed shows as a gap with a reason, never as a hole.
-- **It does not guess.** It does not know who in the call said what, so it says **Meeting**. A line that looks like your microphone hearing the call is dimmed (`probable-echo`), not deleted. So is a phrase models invent from silence (`suspect`).
+- **It is built not to lose speech quietly.** Every stretch of speech is saved before it is sent. If the network drops or the key runs out, it waits and retries. What failed or came back empty shows as a gap with a reason and a retry. This is the design, tested with fake audio, and the beta is where it meets real calls.
+- **It tries not to guess.** It does not know who in the call said what, so it says **Meeting**. A line that looks like your microphone hearing the call is dimmed (`probable-echo`) rather than deleted, and so is a phrase models invent from silence (`suspect`). Both flags are heuristics and can be wrong.
 - **Not there yet:** names for the other speakers, editing the transcript, search across meetings, and the Chrome Web Store. [What is built](built/index.md) is the honest list.
 
 ## Tell us what happened

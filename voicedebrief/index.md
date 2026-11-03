@@ -22,6 +22,8 @@ Read from the VoiceDebrief website repository (`VoiceDebrief/VoiceDebrief__Websi
 
 ## What differs, and why
 
+- **Privacy wording, stricter for the beta.** MeetScribe adds one sentence to voicedebrief.ai's: do not use it for confidential meetings, because once audio reaches OpenRouter we cannot see or verify what happens to it. Its zero-data-retention option is described as a request to OpenRouter, not a guarantee (the v0.3.1 review, finding 03).
+
 - **How the audio is transcribed.** voicedebrief.ai sends a whole voice note to a chat model (`google/gemini-3.5-flash`) as audio input. MeetScribe sends 8 to 30 second segments to OpenRouter's speech-to-text endpoint, because a meeting is long, arrives live, and must not be lost if one request fails. The model is chosen in the Phase 0 bake-off; Gemini through the chat route is one of the candidates worth adding to it.
 - **Speakers.** A voice note has one speaker. A meeting has **You** (your microphone) and **Meeting** (the call). Nothing more is claimed.
 - **No infographic yet.** It is an optional step on the website; it can follow the same way.

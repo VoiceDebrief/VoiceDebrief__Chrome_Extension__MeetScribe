@@ -1,4 +1,6 @@
-# Install and use MeetScribe v0.3.1
+# Install and use MeetScribe v0.3.2
+
+> **Beta: do not use it for confidential meetings.** MeetScribe keeps everything in your browser, but the audio and transcript go to OpenRouter and on to a model provider, where we cannot see or verify what happens to them. [Where your audio goes](../index.md#where-your-audio-goes) has the detail.
 
 MeetScribe is not in the Chrome Web Store yet. You load it yourself, which takes about two minutes, from a zip or from a clone of the repository. Both hold exactly the same files. [Build, test and release](../develop/index.md) has the developer's side.
 
@@ -31,7 +33,7 @@ Then **Load unpacked** and pick the repository's `extension/` folder. After a `g
 
 ![The options page](images/options.png)
 
-1. **OpenRouter key.** Paste a key you made for MeetScribe, **with a credit limit**, then Save and **Test the key**. The test shows the key's usage and limit.
+1. **OpenRouter key.** Paste a key you made for MeetScribe, **with a credit limit**, and press **Save and test**. It saves the key and shows its usage and limit.
 2. **Microphone.** Press **Allow the microphone** only if you want your own voice transcribed. Chrome asks here because the capture page is never shown and cannot ask.
 3. **Where you hear the meeting.** Pick the headset or speakers you use for Meet, and press **Play a test tone**.
 4. **Model.** **Load the live list** shows every OpenRouter transcription model with its listed price per hour. `openai/whisper-large-v3` is the starting point until the Phase 0 bake-off picks a default.
@@ -41,7 +43,7 @@ Then **Load unpacked** and pick the repository's `extension/` folder. After a `g
 
 ![The side panel before starting](images/panel-start.png)
 
-1. Join the Meet call. While on the Meet tab, click the MeetScribe icon (or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). The side panel opens beside Meet.
+1. Join the Meet call. **While on the Meet tab**, click the MeetScribe icon in Chrome's toolbar (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). That click is what lets Chrome capture the tab. The side panel opens beside Meet and names the tab it will capture. To capture a different tab, go to it and click the icon there.
 2. If you want your own voice too, tick **Also transcribe my microphone**. It is separate from Meet's mute: use the panel's **Mute my mic** or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>.
 3. Tell the participants: **Copy notice for Meet's chat** and paste it into the chat. Then tick **I have told the participants** and press **Start transcribing**. The icon shows **REC**.
 4. Lines appear in the panel a few seconds after each pause in speech. **Meeting** is the call; **You** is your microphone. Dimmed lines are flagged (`probable-echo`, `suspect`), never deleted.
@@ -69,7 +71,7 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 
 | | Question | How to see it |
 |---|---|---|
-| S1 | Does Start in the side panel capture the Meet tab? | If not, the panel says "Chrome would not capture this tab" and quotes Chrome's message |
+| S1 | Does Start capture the Meet tab after clicking the icon on it? (Answered "no" for opening the panel straight from the icon, on the first real call; v0.3.2 changed the route) | The panel names the tab before you start; if capture fails, the panel says why and the message stays |
 | S2 | Does the microphone work in the capture page after the one-time grant? | A microphone problem shows under the meters and on the meeting page |
 | S3 | How much of the meeting leaks into your microphone on speakers? | Count the dimmed `probable-echo` lines with and without headphones |
 | S4 | Memory over 2 hours | `chrome://extensions`, MeetScribe, inspect `offscreen.html`, Memory tab |
@@ -80,8 +82,8 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 
 ## A first test: a short script
 
-1. Install or update, and check the options page's footer shows **0.3.1**.
-2. Make or reuse a capped OpenRouter key; **Test the key**.
+1. Install or update, and check the options page's footer shows **0.3.2**.
+2. Make or reuse a capped OpenRouter key; **Save and test**.
 3. A two-person Meet call, headphones on, microphone **on**. Talk for five minutes, with one stretch muted in Meet only (S7).
 4. Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).
 5. **Write the debrief**; check every point against the line its time names.

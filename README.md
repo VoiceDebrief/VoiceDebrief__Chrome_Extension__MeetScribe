@@ -8,12 +8,14 @@ Site: **https://meetscribe.chrome-extension.voicedebrief.ai/**
 
 1. Download **[meetscribe-latest.zip](https://meetscribe.chrome-extension.voicedebrief.ai/releases/meetscribe-latest.zip)** and unzip it (a folder called `meetscribe`).
 2. `chrome://extensions`, switch on **Developer mode**, press **Load unpacked**, pick the `meetscribe` folder.
-3. The options page opens: paste an OpenRouter key ([how to get one, with a spending cap](https://voicedebrief.ai/openrouter-key/)) and press **Test the key**.
+3. The options page opens: paste an OpenRouter key ([how to get one, with a spending cap](https://voicedebrief.ai/openrouter-key/)) and press **Save and test**.
 4. In a Meet call, click the MeetScribe icon on the Meet tab: consent, **Start transcribing**. After the call: **Stop**, **Meetings**, **Write the debrief**.
+
+**Beta: do not use it for confidential meetings.** MeetScribe is client-side on our side (no server, no account, no analytics; data stays in your browser, unencrypted). The audio and transcript go to OpenRouter and on to a model provider, and from there we cannot see or verify who processes them or whether they are kept. The zero-data-retention option is a request to OpenRouter, not a guarantee.
 
 Then [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md). An hour of meeting costs roughly 5 to 15 US cents on OpenRouter (3 November 2026 prices); you pay OpenRouter directly, and MeetScribe charges nothing.
 
-**Status (3 November 2026): v0.3.1, beta.** 45 automated tests pass (Node and Chromium, fake audio, replayed OpenRouter responses). The first real Meet calls are being made now. [`built/index.md`](built/index.md) says what exists; [`install/index.md`](install/index.md) has the full guide with screenshots.
+**Status (3 November 2026): v0.3.2, beta.** 61 automated tests pass (Node and Chromium, fake audio, replayed OpenRouter responses). The first real Meet calls are being made now. [`built/index.md`](built/index.md) says what exists; [`install/index.md`](install/index.md) has the full guide with screenshots.
 
 ## The site's pages
 

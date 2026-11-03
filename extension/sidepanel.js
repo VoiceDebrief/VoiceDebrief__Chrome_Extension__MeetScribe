@@ -13,26 +13,36 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 
 $('ver').textContent = 'v' + BUILD.version + (BUILD.test ? ' TEST' : '');
 let session = null, settings = null, shownMeeting = null;
+let startError = null;   // stays on screen until the next Start (the 1 s refresh used to wipe it at once)
 
 function banner(kind, text, link) {
-  const b = $('banner'); b.replaceChildren();
+  const b = $('banner');
+  if (startError && !text) { kind = 'err'; text = startError; link = null; }
+  const sig = `${kind}|${text || ''}|${link?.href || ''}`;
+  if (b.dataset.sig === sig) return;                 // unchanged: do not re-announce it every second
+  b.dataset.sig = sig; b.replaceChildren();
   if (!text) return;
   const d = el('div', kind, text + ' ');
   if (link) { const a = el('a', null, link.text); a.href = link.href; a.target = '_blank'; d.append(a); }
   b.append(d);
 }
 
+/** The tab the MeetScribe icon was last clicked on, if it still exists (route b: that click grants the capture). */
 async function targetTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tab || null;
+  const { invoked } = await chrome.storage.session.get({ invoked: null });
+  if (!invoked) return null;
+  try { const t = await chrome.tabs.get(invoked.tabId); return { ...t, title: t.title || invoked.title, url: t.url || invoked.url }; } catch { return null; }
 }
 
 async function renderIdle() {
   const tab = await targetTab();
   const url = tab?.url || '';
   const isMeet = /^https:\/\/meet\.google\.com\//.test(url);
-  $('tabinfo').textContent = tab ? (tab.title ? `${tab.title}${url ? ' (' + new URL(url).host + ')' : ''}` : 'the active tab') + (url && !isMeet ? '. Not a Google Meet tab: MeetScribe will still capture it.' : '') : 'No active tab.';
-  $('start').disabled = !$('consent').checked || !settings.apiKey;
+  $('tabinfo').textContent = !tab
+    ? 'No tab chosen yet. Go to the Meet tab and click the MeetScribe icon in the toolbar: that click is what lets Chrome capture the tab.'
+    : `${tab.title || 'Untitled tab'}${url ? ' (' + new URL(url).host + ')' : ''}` + (url && !isMeet ? '. Not a Google Meet tab: MeetScribe will still capture it.' : '') +
+      ' To transcribe another tab, go to it and click the MeetScribe icon there.';
+  $('start').disabled = !$('consent').checked || !settings.apiKey || !tab;
 }
 
 async function refresh() {
@@ -43,6 +53,7 @@ async function refresh() {
 
   if (!settings.apiKey) banner('warn', 'Set your OpenRouter key before starting.', { text: 'Open options', href: 'options.html' });
   else if (held.length) banner('err', `${held[0].lastError}: ${held.length} segment(s) are kept and will be sent once it is fixed.`, { text: 'Fix the key', href: 'options.html' });
+  else if (startError) banner('err', startError);
   else if (session?.error) banner('warn', session.error);
   else if (!navigator.onLine && counts.pending) banner('warn', 'Offline: segments are saved and will be sent when the connection returns.');
   else banner();
@@ -96,20 +107,13 @@ $('useMic').addEventListener('change', () => { $('micNote').hidden = !$('useMic'
 $('copy').addEventListener('click', async () => { await navigator.clipboard.writeText($('notice').value); $('copied').textContent = 'Copied.'; });
 
 $('start').addEventListener('click', async () => {
-  $('start').disabled = true;
+  $('start').disabled = true; startError = null; banner();
   const tab = await targetTab();
-  if (!tab) return banner('err', 'No active tab to capture.');
-  let streamId;
-  try {
-    // called here, in the click, on the tab the panel was opened for (spike S1, route a)
-    streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id });
-  } catch (e) {
-    $('start').disabled = false;
-    return banner('err', `Chrome would not capture this tab: ${e.message}. Click the MeetScribe icon while on the Meet tab, then Start.`);
-  }
-  const r = await sw({ type: 'start', streamId, tabId: tab.id, title: tab.title || null, mic: $('useMic').checked });
-  if (!r?.ok) { $('start').disabled = false; banner('err', 'Could not start: ' + (r?.error || 'no answer')); }
-  $('consent').checked = false;
+  if (!tab) { startError = 'Go to the Meet tab and click the MeetScribe icon in the toolbar, then press Start.'; return refresh(); }
+  // route b: the service worker asks Chrome for the stream of the tab the icon was clicked on
+  const r = await sw({ type: 'start', tabId: tab.id, title: tab.title || null, mic: $('useMic').checked });
+  if (!r?.ok) { startError = 'Could not start: ' + (r?.error || 'no answer from the extension'); $('start').disabled = false; }
+  else $('consent').checked = false;
   refresh();
 });
 $('stop').addEventListener('click', async () => { await sw({ type: 'stop' }); refresh(); });

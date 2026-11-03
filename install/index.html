@@ -22,11 +22,12 @@
   <a class="brand" href="../index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
   <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
   <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
-  <a class="ver" href="../versions/index.html" title="Release history">v0.3.1</a>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.3.2</a>
   <a class="nl here" href="../install/index.html">Install</a>
   <a class="nl" href="../develop/index.html">Build</a>
   <a class="nl" href="../built/index.html">Built</a>
   <a class="nl" href="../voicedebrief/index.html">VoiceDebrief</a>
+  <a class="nl" href="../reviews/index.html">Reviews</a>
   <a class="nl" href="../review/index.html">Review</a>
   <a class="nl" href="../brief/index.html">Brief v2.0</a>
   <a class="nl" href="../plan/index.html">Plan</a>
@@ -37,7 +38,8 @@
 
 <main class="doc">
 <div class="crumb"><a href="../index.html">MeetScribe</a> / install</div>
-<h1 id="install-and-use-meetscribe-v0-3-1">Install and use MeetScribe v0.3.1</h1>
+<h1 id="install-and-use-meetscribe-v0-3-2">Install and use MeetScribe v0.3.2</h1>
+<blockquote><p><strong>Beta: do not use it for confidential meetings.</strong> MeetScribe keeps everything in your browser, but the audio and transcript go to OpenRouter and on to a model provider, where we cannot see or verify what happens to them. <a href="../index.html#where-your-audio-goes">Where your audio goes</a> has the detail.</p></blockquote>
 <p>MeetScribe is not in the Chrome Web Store yet. You load it yourself, which takes about two minutes, from a zip or from a clone of the repository. Both hold exactly the same files. <a href="../develop/index.html">Build, test and release</a> has the developer's side.</p>
 <h2 id="install-from-the-zip-most-people">Install from the zip (most people)</h2>
 <ol>
@@ -56,7 +58,7 @@
 <h2 id="set-up-once">Set up (once)</h2>
 <p><img class="shot" src="images/options.png" alt="The options page" loading="lazy"></p>
 <ol>
-<li><strong>OpenRouter key.</strong> Paste a key you made for MeetScribe, <strong>with a credit limit</strong>, then Save and <strong>Test the key</strong>. The test shows the key's usage and limit.</li>
+<li><strong>OpenRouter key.</strong> Paste a key you made for MeetScribe, <strong>with a credit limit</strong>, and press <strong>Save and test</strong>. It saves the key and shows its usage and limit.</li>
 <li><strong>Microphone.</strong> Press <strong>Allow the microphone</strong> only if you want your own voice transcribed. Chrome asks here because the capture page is never shown and cannot ask.</li>
 <li><strong>Where you hear the meeting.</strong> Pick the headset or speakers you use for Meet, and press <strong>Play a test tone</strong>.</li>
 <li><strong>Model.</strong> <strong>Load the live list</strong> shows every OpenRouter transcription model with its listed price per hour. <code>openai/whisper-large-v3</code> is the starting point until the Phase 0 bake-off picks a default.</li>
@@ -65,7 +67,7 @@
 <h2 id="use-it-in-a-meeting">Use it in a meeting</h2>
 <p><img class="shot" src="images/panel-start.png" alt="The side panel before starting" loading="lazy"></p>
 <ol>
-<li>Join the Meet call. While on the Meet tab, click the MeetScribe icon (or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). The side panel opens beside Meet.</li>
+<li>Join the Meet call. <strong>While on the Meet tab</strong>, click the MeetScribe icon in Chrome's toolbar (or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). That click is what lets Chrome capture the tab. The side panel opens beside Meet and names the tab it will capture. To capture a different tab, go to it and click the icon there.</li>
 <li>If you want your own voice too, tick <strong>Also transcribe my microphone</strong>. It is separate from Meet's mute: use the panel's <strong>Mute my mic</strong> or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>.</li>
 <li>Tell the participants: <strong>Copy notice for Meet's chat</strong> and paste it into the chat. Then tick <strong>I have told the participants</strong> and press <strong>Start transcribing</strong>. The icon shows <strong>REC</strong>.</li>
 <li>Lines appear in the panel a few seconds after each pause in speech. <strong>Meeting</strong> is the call; <strong>You</strong> is your microphone. Dimmed lines are flagged (<code>probable-echo</code>, <code>suspect</code>), never deleted.</li>
@@ -88,7 +90,7 @@
 <div class="tablewrap"><table>
 <thead><tr><th></th><th>Question</th><th>How to see it</th></tr></thead>
 <tbody>
-<tr><td>S1</td><td>Does Start in the side panel capture the Meet tab?</td><td>If not, the panel says &quot;Chrome would not capture this tab&quot; and quotes Chrome's message</td></tr>
+<tr><td>S1</td><td>Does Start capture the Meet tab after clicking the icon on it? (Answered &quot;no&quot; for opening the panel straight from the icon, on the first real call; v0.3.2 changed the route)</td><td>The panel names the tab before you start; if capture fails, the panel says why and the message stays</td></tr>
 <tr><td>S2</td><td>Does the microphone work in the capture page after the one-time grant?</td><td>A microphone problem shows under the meters and on the meeting page</td></tr>
 <tr><td>S3</td><td>How much of the meeting leaks into your microphone on speakers?</td><td>Count the dimmed <code>probable-echo</code> lines with and without headphones</td></tr>
 <tr><td>S4</td><td>Memory over 2 hours</td><td><code>chrome://extensions</code>, MeetScribe, inspect <code>offscreen.html</code>, Memory tab</td></tr>
@@ -99,8 +101,8 @@
 </tbody></table></div>
 <h2 id="a-first-test-a-short-script">A first test: a short script</h2>
 <ol>
-<li>Install or update, and check the options page's footer shows <strong>0.3.1</strong>.</li>
-<li>Make or reuse a capped OpenRouter key; <strong>Test the key</strong>.</li>
+<li>Install or update, and check the options page's footer shows <strong>0.3.2</strong>.</li>
+<li>Make or reuse a capped OpenRouter key; <strong>Save and test</strong>.</li>
 <li>A two-person Meet call, headphones on, microphone <strong>on</strong>. Talk for five minutes, with one stretch muted in Meet only (S7).</li>
 <li>Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).</li>
 <li><strong>Write the debrief</strong>; check every point against the line its time names.</li>
@@ -115,7 +117,7 @@
     <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
     <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
     <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
-    <p class="verline">site v0.3.1 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+    <p class="verline">site v0.3.2 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>
@@ -130,6 +132,7 @@
   </div>
   <div>
     <h4>Record</h4>
+    <a href="../reviews/index.html">Reviews and findings</a>
     <a href="../sources/index.html">Sources</a>
     <a href="../versions/index.html">Release history</a>
     <a href="../brief/v1/index.html">Brief v1.0, as received</a>

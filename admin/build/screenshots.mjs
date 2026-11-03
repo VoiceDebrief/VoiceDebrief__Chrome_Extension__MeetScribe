@@ -24,6 +24,7 @@ const url = (p) => `chrome-extension://${id}/${p}`;
 await sw.evaluate((b) => chrome.storage.local.set({ apiKey: 'sk-or-v1-screenshot-not-a-key-0000', apiBase: b }), replay.base);
 for (const p of ctx.pages()) if (p.url().includes('options.html')) await p.close();
 
+await sw.evaluate(() => chrome.tabs.query({}).then(t => chrome.storage.session.set({ invoked: { tabId: t[0].id, windowId: t[0].windowId, title: 'Meet: weekly planning', url: 'https://meet.google.com/abc-defg-hij' } })));
 const panel = await ctx.newPage(); await panel.setViewportSize({ width: 400, height: 760 });
 await panel.goto(url('sidepanel.html')); await panel.waitForTimeout(800);
 await panel.check('#useMic'); await panel.check('#consent'); await panel.waitForTimeout(300);

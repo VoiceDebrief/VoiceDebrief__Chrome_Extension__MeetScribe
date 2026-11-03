@@ -1,0 +1,11 @@
+{
+  "source": "shaped from OpenRouter's documented error envelope, a 400 unrelated to the response format (v0.3.1 review, finding 14); not recorded",
+  "status": 400,
+  "headers": {},
+  "body": {
+    "error": {
+      "code": 400,
+      "message": "Unsupported language: xx"
+    }
+  }
+}

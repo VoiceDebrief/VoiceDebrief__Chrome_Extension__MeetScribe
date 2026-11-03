@@ -1,0 +1,14 @@
+{
+  "source": "shaped from OpenRouter's STT response with an empty text field (v0.3.1 review, finding 08); not recorded",
+  "status": 200,
+  "headers": {
+    "x-generation-id": "gen-fixture-empty"
+  },
+  "body": {
+    "text": "",
+    "usage": {
+      "seconds": 1.0,
+      "cost": 1e-05
+    }
+  }
+}

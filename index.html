@@ -22,11 +22,12 @@
   <a class="brand" href="index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
   <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
   <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
-  <a class="ver" href="versions/index.html" title="Release history">v0.3.1</a>
+  <a class="ver" href="versions/index.html" title="Release history">v0.3.2</a>
   <a class="nl" href="install/index.html">Install</a>
   <a class="nl" href="develop/index.html">Build</a>
   <a class="nl" href="built/index.html">Built</a>
   <a class="nl" href="voicedebrief/index.html">VoiceDebrief</a>
+  <a class="nl" href="reviews/index.html">Reviews</a>
   <a class="nl" href="review/index.html">Review</a>
   <a class="nl" href="brief/index.html">Brief v2.0</a>
   <a class="nl" href="plan/index.html">Plan</a>
@@ -38,15 +39,16 @@
 <main class="doc">
 <h1 id="meetscribe-a-transcript-and-a-debrief-of-your-google-meet-calls">MeetScribe: a transcript and a debrief of your Google Meet calls</h1>
 <p>Transcribes the Google Meet call you are in and writes the debrief: key points, decisions, actions, open questions. It runs as a Chrome extension on your own OpenRouter key. There is no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), and no server of ours. Your words are labelled <strong>You</strong>, everyone else's <strong>Meeting</strong>, and every point in the debrief carries the time of the line it came from.</p>
-<p class="ctas" style="justify-content:flex-start"><a class="cta1" href="releases/meetscribe-latest.zip">Download MeetScribe v0.3.1 (zip, 44 KB)</a></p>
-<blockquote><p><strong>Beta, 3 November 2026.</strong> This is the first build that anyone outside the project can try. It has been tested in Chromium with fake audio and replayed responses (45 automated tests), and <strong>its first real Meet calls are being made now</strong>. Expect rough edges, and please <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md">tell us what happened</a>.</p></blockquote>
+<p class="ctas" style="justify-content:flex-start"><a class="cta1" href="releases/meetscribe-latest.zip">Download MeetScribe v0.3.2 (zip, 52 KB)</a></p>
+<blockquote><p><strong>Beta: do not use it for confidential meetings.</strong> Everything you transcribe is sent to OpenRouter, a third party, and what happens to it there is outside our control and our view. <a href="#where-your-audio-goes">Where your audio goes</a> says exactly what that means.</p>
+<p>This build follows <a href="reviews/index.html">a code review of 18 findings</a> and a fix from the first real call. It has been tested in Chromium with fake audio and replayed responses (61 automated tests), and <strong>its first real Meet calls are being made now</strong>. Expect rough edges, and please <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md">tell us what happened</a>.</p></blockquote>
 <p><img class="shot" src="install/images/meetings.png" alt="A meeting in MeetScribe: the debrief above the transcript, each point timed to its line (from the automated test, with synthetic audio, so the transcript repeats itself)" loading="lazy"></p>
 <h2 id="try-it-in-five-minutes">Try it in five minutes</h2>
 <ol>
 <li><strong>Download and unzip</strong> <a href="releases/meetscribe-latest.zip">the zip</a>. You get a folder called <code>meetscribe</code>.</li>
 <li><strong>Load it in Chrome.</strong> Open <code>chrome://extensions</code>, switch on <strong>Developer mode</strong> (top right), press <strong>Load unpacked</strong> and pick the <code>meetscribe</code> folder. Pin <strong>VoiceDebrief MeetScribe</strong> to the toolbar.</li>
-<li><strong>Add your OpenRouter key.</strong> The options page opens by itself. Paste a key and press <strong>Test the key</strong>. No key yet? <a href="https://voicedebrief.ai/openrouter-key/">Get one in five steps</a>, and <strong>set a credit limit on it</strong>: a few dollars is plenty.</li>
-<li><strong>In a Meet call,</strong> click the MeetScribe icon while on the Meet tab. The side panel opens. Tell the others you are transcribing (there is a notice to copy into Meet's chat), tick the box, press <strong>Start transcribing</strong>.</li>
+<li><strong>Add your OpenRouter key.</strong> The options page opens by itself. Paste a key and press <strong>Save and test</strong>. No key yet? <a href="https://voicedebrief.ai/openrouter-key/">Get one in five steps</a>, and <strong>set a credit limit on it</strong>: a few dollars is plenty.</li>
+<li><strong>In a Meet call,</strong> go to the Meet tab and click the MeetScribe icon in Chrome's toolbar. That click is what lets Chrome capture the tab; the side panel opens and names the tab. Tell the others you are transcribing (there is a notice to copy into Meet's chat), tick the box, press <strong>Start transcribing</strong>.</li>
 <li><strong>After the call,</strong> press <strong>Stop</strong>, open <strong>Meetings</strong>, and press <strong>Write the debrief</strong>. Export it as Markdown, text or JSON.</li>
 </ol>
 <p>Want your own voice transcribed as well? Press <strong>Allow the microphone</strong> on the options page once, then tick <strong>Also transcribe my microphone</strong> before you start. It has its own mute (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>), separate from Meet's. Use headphones, or your microphone will hear the call too.</p>
@@ -61,14 +63,16 @@
 </tbody></table></div>
 <p><strong>What it costs.</strong> At OpenRouter's listed prices on 3 November 2026, an hour of meeting costs roughly <strong>5 to 15 US cents</strong>. That is about 3 to 11 cents to transcribe with the default <code>openai/whisper-large-v3</code>, depending on the provider OpenRouter picks, plus about 2 to 3 cents for the debrief with <code>google/gemini-3.5-flash</code>. Silence is never sent. Each meeting shows the cost OpenRouter actually reported; <a href="models/index.html">the models page</a> lists every transcription model's price.</p>
 <h2 id="where-your-audio-goes">Where your audio goes</h2>
-<p>Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. Do not use this for anything you would not hand to a third party.</p>
-<p>MeetScribe asks OpenRouter for zero-data-retention providers only. Everything else stays in your browser: the meetings, the transcripts, the debriefs, the audio waiting to be sent, and your key. There is no account, no analytics and no server of ours. <strong>Delete all MeetScribe data</strong> is on the options page.</p>
+<p><strong>On our side, everything is client-side.</strong> MeetScribe has no server, no account and no analytics. Your meetings, transcripts, debriefs, the audio waiting to be sent and your key stay in this browser profile. They are stored like any extension's data, not encrypted, so anyone with access to your computer and Chrome profile can read them. <strong>Delete all MeetScribe data</strong> is on the options page; your key and settings are cleared separately.</p>
+<p><strong>Once audio leaves your browser, it is out of our hands.</strong> Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. We cannot see or verify who processes it, whether it is kept, or for how long.</p>
+<p>MeetScribe asks OpenRouter for zero-data-retention routing. That is a request, applied according to your OpenRouter account's own settings, which we cannot see. It is not a guarantee we can give, so please don't read it as one.</p>
+<p><strong>So, during the beta: treat everything you transcribe as shared with a third party, and do not use MeetScribe for anything confidential.</strong></p>
 <p><strong>Consent is yours to get.</strong> Meet's own recording tells everyone in the call; MeetScribe cannot, so it asks you to, every meeting. Recording or transcribing people without their consent is unlawful in some places.</p>
 <h2 id="what-to-expect">What to expect</h2>
 <ul>
 <li><strong>It listens only while you can see it listening.</strong> The icon shows <strong>REC</strong>, Chrome shows its own capture indicator, and Stop is one click away. Closing the Meet tab also stops it.</li>
-<li><strong>Nothing is lost quietly.</strong> Every stretch of speech is saved before it is sent. If the network drops or the key runs out, it waits and retries. Anything that failed shows as a gap with a reason, never as a hole.</li>
-<li><strong>It does not guess.</strong> It does not know who in the call said what, so it says <strong>Meeting</strong>. A line that looks like your microphone hearing the call is dimmed (<code>probable-echo</code>), not deleted. So is a phrase models invent from silence (<code>suspect</code>).</li>
+<li><strong>It is built not to lose speech quietly.</strong> Every stretch of speech is saved before it is sent. If the network drops or the key runs out, it waits and retries. What failed or came back empty shows as a gap with a reason and a retry. This is the design, tested with fake audio, and the beta is where it meets real calls.</li>
+<li><strong>It tries not to guess.</strong> It does not know who in the call said what, so it says <strong>Meeting</strong>. A line that looks like your microphone hearing the call is dimmed (<code>probable-echo</code>) rather than deleted, and so is a phrase models invent from silence (<code>suspect</code>). Both flags are heuristics and can be wrong.</li>
 <li><strong>Not there yet:</strong> names for the other speakers, editing the transcript, search across meetings, and the Chrome Web Store. <a href="built/index.html">What is built</a> is the honest list.</li>
 </ul>
 <h2 id="tell-us-what-happened">Tell us what happened</h2>
@@ -109,7 +113,7 @@
     <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
     <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
     <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
-    <p class="verline">site v0.3.1 · <a href="index.md">this page as markdown</a> · <a href="llms.txt">llms.txt</a></p>
+    <p class="verline">site v0.3.2 · <a href="index.md">this page as markdown</a> · <a href="llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>
@@ -124,6 +128,7 @@
   </div>
   <div>
     <h4>Record</h4>
+    <a href="reviews/index.html">Reviews and findings</a>
     <a href="sources/index.html">Sources</a>
     <a href="versions/index.html">Release history</a>
     <a href="brief/v1/index.html">Brief v1.0, as received</a>

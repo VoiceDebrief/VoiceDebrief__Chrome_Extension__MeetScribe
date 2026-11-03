@@ -7,7 +7,8 @@ const APP_HEADERS = { 'X-Title': 'MeetScribe', 'HTTP-Referer': 'https://github.c
 
 /** What a failure means and what to do about it. kind: retry | fatal-segment | key | credit | offline-or-key | fallback-json */
 export function classify(status, message = '') {
-  if (status === 400 && /verbose_json|response_format/i.test(message)) return { kind: 'fallback-json' };
+  // only an error that names the response format or timestamps is a format-capability error (review finding 14)
+  if (status === 400 && /verbose_json|response_format|timestamp_granularit/i.test(message)) return { kind: 'fallback-json' };
   if (status === 400 || status === 413 || status === 404 || status === 422) return { kind: 'fatal-segment' };
   if (status === 401 || status === 403) return { kind: 'key' };
   if (status === 402) return { kind: 'credit' };
@@ -29,11 +30,15 @@ export class ApiError extends Error {
   constructor(status, message, retryAfter = null) { super(message); this.status = status; this.retryAfter = retryAfter; this.kind = classify(status, message).kind; }
 }
 
-async function call(apiBase, key, path, init = {}) {
+export const REQUEST_TIMEOUT_MS = 75000;   // OpenRouter's upstream timeout is 60 s; the queue's lease is 180 s
+
+async function call(apiBase, key, path, init = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   let res;
   try {
-    res = await fetch(apiBase + path, { ...init, headers: { ...APP_HEADERS, ...(init.headers || {}), ...(key ? { Authorization: 'Bearer ' + key } : {}) } });
+    res = await fetch(apiBase + path, { ...init, signal: AbortSignal.timeout(timeoutMs),
+      headers: { ...APP_HEADERS, ...(init.headers || {}), ...(key ? { Authorization: 'Bearer ' + key } : {}) } });
   } catch (e) {
+    if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw new ApiError(408, `no answer within ${Math.round(timeoutMs / 1000)} s`);
     throw new ApiError(0, 'network: ' + (e && e.message || 'fetch failed'));   // a rejected key can look like this (VoiceDebrief issue 032)
   }
   const text = await res.text();
@@ -63,20 +68,28 @@ export async function transcribe({ apiBase = API_BASE, key, model, wav, language
   const { body, res } = await call(apiBase, key, '/audio/transcriptions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   });
-  return parseTranscription(body, res.headers.get('x-generation-id'), verbose ? 'verbose_json' : 'json');
+  const seconds = wav.length > 44 ? (wav.length - 44) / 32000 : null;   // 16 kHz, 16-bit mono
+  return parseTranscription(body, res.headers.get('x-generation-id'), verbose ? 'verbose_json' : 'json', seconds);
 }
 
-/** Validates the shape. Missing is null, never 0 or ''. */
-export function parseTranscription(body, generationId = null, format = 'json') {
+/**
+ * Validates the shape. Missing is null, never 0 or ''. Model timestamps must lie inside the audio that was sent
+ * (0 <= start <= end <= its length, with half a second of tolerance); if any does not, every timestamp of the
+ * response is set aside and the lines fall back to the segment's own start (review finding 15).
+ */
+export function parseTranscription(body, generationId = null, format = 'json', audioSeconds = null) {
   if (!body || typeof body.text !== 'string') throw new ApiError(502, 'response has no text field');
   const usage = body.usage && typeof body.usage === 'object' ? body.usage : {};
   const segments = Array.isArray(body.segments)
     ? body.segments.filter(s => s && typeof s.text === 'string' && Number.isFinite(s.start) && Number.isFinite(s.end))
         .map(s => ({ start: s.start, end: s.end, text: s.text.trim() }))
     : null;
+  const limit = audioSeconds === null ? Infinity : audioSeconds + 0.5;
+  const timingOk = !segments || segments.every(x => x.start >= 0 && x.end >= x.start && x.end <= limit);
   return {
     text: body.text.trim(),
-    segments: segments && segments.length ? segments : null,
+    segments: segments && segments.length && timingOk ? segments : null,
+    timingRejected: !timingOk,
     language: typeof body.language === 'string' ? body.language : null,
     seconds: Number.isFinite(usage.seconds) ? usage.seconds : (Number.isFinite(body.duration) ? body.duration : null),
     cost: Number.isFinite(usage.cost) ? usage.cost : null,

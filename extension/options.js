@@ -43,13 +43,19 @@ async function devices(s) {
 
 const saved = () => { $('saved').textContent = 'Saved ' + new Date().toLocaleTimeString(); };
 
+// One action: Save stores the key and tests it, so the quick start ("paste, Save") ends with Start enabled
+// (v0.3.1 review, finding 11). A held queue resumes, including a live capture's (finding 05).
 $('saveKey').addEventListener('click', async () => {
   const k = $('key').value.trim();
   if (!k) return say('keyState', 'Paste a key first.', '');
   await setSettings({ apiKey: k });
-  await db.resumeHeld();                         // segments held for a key problem go back in the queue
+  await db.resumeHeld();
   chrome.runtime.sendMessage({ target: 'sw', type: 'drain' }).catch(() => {});
-  $('key').value = ''; await load(); say('keyState', 'Saved. Segments held for a key problem will be sent.', 'ok');
+  $('key').value = ''; await load();
+  say('keyState', 'Saved. Testing it…');
+  const r = await checkKey({ apiBase: apiBase(await getSettings()), key: k });
+  if (r.ok) say('keyState', `Saved, and the key works${r.label ? ' (' + r.label + ')' : ''}. Usage $${r.usage ?? '?'}; limit ${r.limit === null ? 'none set: set one on openrouter.ai' : '$' + r.limit}. You can start transcribing.`, 'ok');
+  else say('keyState', r.status === 401 || r.status === 403 ? 'Saved, but OpenRouter rejected this key: paste a working one.' : `Saved, but the key could not be checked (${r.status || 'network'}). It will be tried when you transcribe.`, '');
 });
 $('clearKey').addEventListener('click', async () => { await setSettings({ apiKey: '' }); await load(); say('keyState', 'Key removed.', ''); });
 $('testKey').addEventListener('click', async () => {
@@ -97,10 +103,10 @@ $('theme').addEventListener('change', async () => { await setSettings({ theme: a
 $('retention').addEventListener('change', async () => { await setSettings({ retentionDays: Number($('retention').value) }); saved(); });
 
 $('deleteAll').addEventListener('click', async () => {
-  if (!confirm('Delete every meeting, transcript and stored audio in MeetScribe? This cannot be undone. Your settings and key are kept.')) return;
-  const before = await db.totals();
-  await db.deleteAll();
-  $('deleted').textContent = `Deleted ${before.meetings} meeting(s), ${before.segments} segment(s), ${before.lines} line(s).`;
+  if (!confirm('Delete every meeting, transcript, debrief and stored audio in MeetScribe from this browser? A recording in progress stops. This cannot be undone, and it cannot recall audio already sent to OpenRouter. Your key and settings are kept: use Clear for the key.')) return;
+  const r = await chrome.runtime.sendMessage({ target: 'sw', type: 'delete-all' });   // finding 01: stops a capture first
+  const before = r?.before || { meetings: '?', segments: '?', lines: '?' };
+  $('deleted').textContent = r?.ok ? `Deleted ${before.meetings} meeting(s), ${before.segments} segment(s), ${before.lines} line(s).` : 'Could not delete: ' + (r?.error || 'no answer');
   await load();
 });
 

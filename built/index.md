@@ -1,4 +1,4 @@
-# What is built in v0.3.1
+# What is built in v0.3.2
 
 The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the reality file: if something is not listed here as built, it does not exist yet, whatever [brief v2.0](../brief/index.md) says.
 
@@ -28,6 +28,10 @@ The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the
 - Edits as a revision layer (6.3). The transcript is read-only.
 - A per-meeting budget, and enabling the icon only on Meet pages through `declarativeContent`. It is not in the manifest, because a permission nothing uses is a permission too many.
 - A release zip and the Chrome Web Store.
+
+## What the first real call and the v0.3.1 review corrected
+
+v0.3.2 fixes 13 of the review's 18 findings and part of 4 more, and leaves 1 open; [Reviews](../reviews/index.md) has the status of each, with its test. The first real call answered spike S1: opening the side panel straight from the icon does not let Chrome capture the tab. The icon click is now handled by MeetScribe, which opens the panel and remembers the tab (route b).
 
 ## What building it corrected
 

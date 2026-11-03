@@ -12,7 +12,7 @@ const DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fi
 export const fixture = (name) => JSON.parse(fs.readFileSync(path.join(DIR, name + '.json'), 'utf8'));
 
 export function startReplay() {
-  const state = { requests: [], chats: [], chatScript: [], script: [], fallback: 'transcription-verbose', key: 'key', delayMs: 0 };
+  const state = { requests: [], chats: [], chatScript: [], chatDelayMs: 0, script: [], fallback: 'transcription-verbose', key: 'key', delayMs: 0 };
   const server = http.createServer((req, res) => {
     const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-expose-headers': 'x-generation-id' };
     if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
@@ -26,6 +26,7 @@ export function startReplay() {
       let p = {}; try { p = JSON.parse(body); } catch {}
       if (url.pathname === '/api/v1/chat/completions') {
         state.chats.push({ model: p.model, zdr: p.provider?.zdr ?? null, system: p.messages?.[0]?.content || '', user: p.messages?.[1]?.content || '' });
+        if (state.chatDelayMs) await new Promise(r => setTimeout(r, state.chatDelayMs));
         return send(fixture(state.chatScript.length ? state.chatScript.shift() : 'chat-debrief'));
       }
       if (url.pathname !== '/api/v1/audio/transcriptions') { res.writeHead(404, cors); return res.end(); }

@@ -1,10 +1,16 @@
 # VoiceDebrief MeetScribe
 
-> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. A VoiceDebrief product (https://voicedebrief.ai): its transcript and debrief, for a meeting. Status on 3 November 2026: v0.3.1, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
+> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. A VoiceDebrief product (https://voicedebrief.ai): its transcript and debrief, for a meeting. Status on 3 November 2026: v0.3.2, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
 
-Site and extension v0.3.1 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. The site is https://meetscribe.chrome-extension.voicedebrief.ai/ (from the CNAME file); the older address voicedebrief.github.io/VoiceDebrief__Chrome_Extension__MeetScribe/ redirects here.
+Site and extension v0.3.2 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. The site is https://meetscribe.chrome-extension.voicedebrief.ai/ (from the CNAME file); the older address voicedebrief.github.io/VoiceDebrief__Chrome_Extension__MeetScribe/ redirects here.
+
+## Privacy, stated plainly
+
+- BETA. Do not use MeetScribe for confidential meetings. On MeetScribe's side everything is client-side: no server, no account, no analytics; meetings, transcripts, debriefs, queued audio and the key stay in the browser profile, unencrypted. The audio and transcript are sent to OpenRouter and on to a model provider; from there MeetScribe cannot see or verify who processes them, whether they are kept, or for how long. provider.zdr:true is sent as a request that OpenRouter applies under the account's own settings; it is not a guarantee and must not be described as one.
 
 ## Read first
+
+- [Reviews and findings](https://meetscribe.chrome-extension.voicedebrief.ai/reviews/index.md): the v0.3.1 code review (18 findings, as received, PDF) with each finding's status and test, and the first real call (S1: the icon click must be handled by the extension for Chrome to allow tab capture; fixed in v0.3.2).
 
 - [Download the extension, latest](https://meetscribe.chrome-extension.voicedebrief.ai/releases/meetscribe-latest.zip): one folder, meetscribe/, to load unpacked at chrome://extensions with Developer mode on. Versioned copies: releases/meetscribe-vX.Y.Z.zip, each with a .sha256; the zip is byte for byte the repository's extension/ folder (the gate checks it).
 - [Report a test](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md): a GitHub issue form with the eight spike questions.

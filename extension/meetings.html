@@ -5,8 +5,11 @@
   .cols{display:grid;grid-template-columns:280px 1fr;gap:1rem;max-width:1200px;margin:0 auto}
   @media (max-width:800px){.cols{grid-template-columns:1fr}}
   ul.list{list-style:none;margin:0;padding:0}
-  ul.list li{padding:.45rem .5rem;border-radius:7px;cursor:pointer}
-  ul.list li.sel,ul.list li:hover{background:var(--panel2)}
+  ul.list li{margin:.1rem 0}
+  ul.list button.meeting{display:block;width:100%;text-align:left;border:none;background:none;padding:.45rem .5rem;border-radius:7px;color:var(--text)}
+  ul.list button.meeting .mt{display:block;color:var(--fg)}
+  ul.list li.sel button.meeting,ul.list button.meeting:hover{background:var(--panel2)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   ol.lines button.play{font-size:11px;padding:0 .4rem;margin-left:.4rem}
   .meta{display:grid;grid-template-columns:auto 1fr;gap:.15rem .8rem;font-size:13px}
   .meta .k{color:var(--dim)}
@@ -14,13 +17,13 @@
 <body>
 <header class="bar"><span class="brand">Voice<em>Debrief</em> <b>MeetScribe</b></span><span class="beta">BETA</span><span class="ver" id="ver"></span><nav><a href="options.html">Options</a></nav></header>
 <main class="cols">
-  <section class="box"><h2>Meetings</h2><ul class="list" id="list"></ul><p class="small dim" id="none" hidden>No meetings yet. Open the side panel on a Meet tab to start.</p></section>
+  <section class="box" aria-label="Meetings"><h2>Meetings</h2><ul class="list" id="list"></ul><p class="small dim" id="none" hidden>No meetings yet. Open the side panel on a Meet tab to start.</p></section>
   <section class="box" id="detail" hidden>
     <h2 id="mTitle"></h2>
     <div class="meta" id="meta"></div>
     <div class="row" style="margin-top:.6rem">
       <button id="exTxt">Export TXT</button><button id="exMd">Export Markdown</button><button id="exJson">Export JSON</button>
-      <button class="primary" id="debrief">Write the debrief</button><button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg"></span>
+      <button class="primary" id="debrief">Write the debrief</button><button id="retry">Retry failed</button><button class="danger" id="del">Delete meeting</button><span class="small" id="msg" role="status" aria-live="polite"></span>
     </div>
     <section id="debriefBox" class="debrief" hidden>
       <h2 style="margin-top:1rem">Debrief</h2>

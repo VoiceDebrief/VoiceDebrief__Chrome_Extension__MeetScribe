@@ -3,11 +3,18 @@
 import { DEBRIEF_PROMPT, LOCALES } from './prompts.js';
 import { clock } from './transcript.js';
 
-/** The transcript as the model reads it. Probable echoes are left out (they repeat a Meeting line); gaps are named. */
+/**
+ * The transcript as the model reads it. Every line goes in: a probable echo is marked, not removed, because the
+ * echo check is a word heuristic and a genuine reply ("I will send the report today") can trip it (v0.3.1 review,
+ * finding 09). Gaps are named, so the debrief can say what it could not see.
+ */
 export function transcriptForPrompt(items) {
-  return items.filter(i => !(i.flags || []).includes('probable-echo')).map(i => i.type === 'line'
-    ? `[${clock(i.startMs)}] ${i.label}: ${i.text}${(i.flags || []).includes('suspect') ? ' (possibly not spoken)' : ''}`
-    : `[${clock(i.startMs)}] ${i.label}: (not transcribed: ${i.status})`).join('\n');
+  return items.map(i => {
+    if (i.type !== 'line') return `[${clock(i.startMs)}] ${i.label}: (not transcribed: ${i.status})`;
+    const f = i.flags || [];
+    const notes = [f.includes('probable-echo') ? 'may be the microphone hearing the Meeting line above' : null, f.includes('suspect') ? 'possibly not spoken' : null].filter(Boolean);
+    return `[${clock(i.startMs)}] ${i.label}: ${i.text}${notes.length ? ' (' + notes.join('; ') + ')' : ''}`;
+  }).join('\n');
 }
 
 export function buildMessages(items, localeId = 'en-gb') {

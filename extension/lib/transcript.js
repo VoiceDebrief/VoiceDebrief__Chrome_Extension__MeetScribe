@@ -62,9 +62,11 @@ export function assemble(segments, lines, { echoWindowMs = 1500, echoThreshold =
 }
 
 /** Cost as reported: the sum of known costs, and how many requests did not report one. Never invents. */
+// Counts every request that came back, including those that returned no text (they were billed too). Attempts
+// that failed or were cut off are not known to have been billed, and are not counted (v0.3.1 review: spend).
 export function costOf(segments) {
   let usd = 0, unknown = 0, requests = 0;
-  for (const s of segments) if (s.status === 'done') { requests++; if (s.costUsd === null || s.costUsd === undefined) unknown++; else usd += s.costUsd; }
+  for (const s of segments) if (s.status === 'done' || s.status === 'empty') { requests++; if (s.costUsd === null || s.costUsd === undefined) unknown++; else usd += s.costUsd; }
   return { usd, unknown, requests };
 }
 
