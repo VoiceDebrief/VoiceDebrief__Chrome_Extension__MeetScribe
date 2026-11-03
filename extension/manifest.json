@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VoiceDebrief MeetScribe",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "VoiceDebrief's transcript and debrief for the Google Meet call you are in, on your own OpenRouter key. No bot, no Google recording, no server of ours.",
   "homepage_url": "https://meetscribe.chrome-extension.voicedebrief.ai/",
   "minimum_chrome_version": "116",

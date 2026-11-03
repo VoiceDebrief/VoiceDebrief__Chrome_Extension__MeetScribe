@@ -47,6 +47,16 @@ header.bar .brand b{color:var(--fg);font-weight:700}
 .debrief ul{margin:.2rem 0 .4rem;padding-left:1.2rem}
 .debrief p{margin:.3rem 0}
 label.row{flex-wrap:nowrap;font-size:13px}
+/* the microphone strip: always visible, impossible to miss when your voice is not being transcribed */
+.strip{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;border-radius:10px;padding:.65rem .8rem;margin:0 0 .8rem;font-size:14px;font-weight:600;border:2px solid}
+.strip.bad{background:var(--vd-wb);border-color:var(--vd-e);color:var(--vd-e)}
+.strip.warn{background:var(--vd-wb);border-color:var(--vd-wl);color:var(--vd-wi)}
+.strip.ok{background:var(--vd-tn);border-color:var(--vd-tl);color:var(--vd-ti);font-weight:500}
+.strip button{margin-left:auto;font-weight:700}
+.strip.bad button{background:var(--vd-e);border-color:var(--vd-e);color:var(--vd-ai)}
+section.box.mic-bad{border:2px solid var(--vd-e)}
+section.box.mic-bad h2{color:var(--vd-e)}
+.small.err{font-weight:700;color:var(--vd-e)}
 label.row input{flex:none;margin-top:.2rem}
 header.bar{flex-wrap:wrap}
 header.bar .brand{white-space:nowrap}

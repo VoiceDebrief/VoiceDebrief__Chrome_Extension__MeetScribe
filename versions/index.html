@@ -22,7 +22,7 @@
   <a class="brand" href="../index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
   <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
   <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
-  <a class="ver" href="../versions/index.html" title="Release history">v0.3.3</a>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.3.4</a>
   <a class="nl" href="../install/index.html">Install</a>
   <a class="nl" href="../develop/index.html">Build</a>
   <a class="nl" href="../built/index.html">Built</a>
@@ -43,6 +43,7 @@
 <div class="tablewrap"><table>
 <thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
 <tbody>
+<tr><td>v0.3.4</td><td>3 November 2026</td><td><strong>The microphone's state is impossible to miss</strong> (the editor: &quot;make it real obvious when that is not set&quot;). A strip at the top of the side panel, in every state: red when your voice is not or would not be transcribed (not allowed, blocked, failed), with the button that fixes it; amber when it is off for the meeting or muted; green when your voice is being transcribed. The options page's microphone section is red until it is allowed. 63 tests.</td></tr>
 <tr><td>v0.3.3</td><td>3 November 2026</td><td>After the second real call, which <strong>captured and transcribed the Meet tab</strong> (S1 confirmed): no &quot;You&quot; lines appeared, so the microphone is now impossible to get wrong silently. The panel says before Start whether Chrome has granted it, with an <strong>Allow the microphone</strong> button; if it fails at Start, a red banner names Chrome's reason for the whole meeting. <strong>Only &quot;You&quot; is labelled</strong>: &quot;Meeting:&quot; on every line was redundant. 63 tests.</td></tr>
 <tr><td>v0.3.2</td><td>3 November 2026</td><td><strong>Capture works the way Chrome allows</strong> (the first real call): the icon click is handled by MeetScribe, which opens the panel and remembers the tab; Start captures that tab; errors stay on screen. <strong>13 of the <a href="../reviews/index.html">v0.3.1 review</a>'s 18 findings fixed, 4 more in part, 1 open</strong>, each pinned by a test: deletion stops capture (01), mute applied on the audio thread (02), honest privacy wording (03), Stop no longer blocks on a dead network (04), a fixed key resumes a live recording (05), startup rollback (06), storage failures surfaced (07), empty transcriptions are gaps (08), echoes kept in the debrief's input (09), the debrief stays with its meeting (10), Save and test (11), labelled controls (12, in part). <strong>Privacy, stated plainly:</strong> client-side on our side only; once audio reaches OpenRouter we cannot see or verify what happens to it; not for confidential meetings during the beta. 61 tests.</td></tr>
 <tr><td>v0.3.1</td><td>3 November 2026</td><td>The site moves to its domain, <a href="https://meetscribe.chrome-extension.voicedebrief.ai/">meetscribe.chrome-extension.voicedebrief.ai</a> (brief v2.0, open question 1, answered): canonical links, <code>og:url</code>, <code>sitemap.xml</code>, <code>robots.txt</code> and absolute URLs in <code>llms.txt</code>, all built from the <code>CNAME</code> file; the extension's homepage points at it; the gate checks they agree. A <strong>download</strong> for testers (<code>releases/meetscribe-latest.zip</code>, byte for byte <code>extension/</code>, loaded by a test as a tester would), a tester-first home page and README, a test-report issue form. CI: a push to <code>dev</code> must be the next minor and only <code>main</code> may be a major. The first run of this release failed on a test racing the first-run options page; fixed, and failures now print their reason. 45 tests.</td></tr>
@@ -57,7 +58,7 @@
     <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
     <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
     <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
-    <p class="verline">site v0.3.3 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+    <p class="verline">site v0.3.4 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>

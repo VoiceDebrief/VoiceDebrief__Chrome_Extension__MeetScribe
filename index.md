@@ -2,7 +2,7 @@
 
 Transcribes the Google Meet call you are in and writes the debrief: key points, decisions, actions, open questions. It runs as a Chrome extension on your own OpenRouter key. There is no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), and no server of ours. Your own words are labelled **You**; everything else is the call, and every point in the debrief carries the time of the line it came from.
 
-[Download MeetScribe v0.3.3 (zip, 52 KB)](releases/meetscribe-latest.zip)
+[Download MeetScribe v0.3.4 (zip, 54 KB)](releases/meetscribe-latest.zip)
 
 > **Beta: do not use it for confidential meetings.** Everything you transcribe is sent to OpenRouter, a third party, and what happens to it there is outside our control and our view. [Where your audio goes](#where-your-audio-goes) says exactly what that means.
 >

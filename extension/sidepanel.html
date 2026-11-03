@@ -7,13 +7,13 @@
   <nav><a href="meetings.html" target="_blank">Meetings</a><a href="options.html" target="_blank">Options</a></nav>
 </header>
 <main>
+  <div id="micStrip" class="strip" role="status" aria-live="polite"><span id="micStripText"></span><button id="micStripAction" hidden></button></div>
   <div id="banner" role="status" aria-live="polite"></div>
 
   <section class="box" id="idle" hidden>
     <h2>This tab</h2>
     <div class="row"><span id="tabinfo" class="dim small"></span></div>
     <label class="row"><input type="checkbox" id="useMic"> <span>Also transcribe my microphone (labelled <b>You</b>) for this meeting</span></label>
-    <div class="err small" id="micGrant" hidden>MeetScribe is not yet allowed to use your microphone, so your voice would not be transcribed. Chrome only asks on a normal page: <button id="grantMic">Allow the microphone</button> opens it; press <b>Allow the microphone</b> there, accept Chrome's prompt, then come back.</div>
     <div class="warn small" id="micNote" hidden>MeetScribe's microphone is separate from Meet's. Muting yourself in Meet does not mute MeetScribe: use the mute button here or <span class="mono">Alt+Shift+M</span>.</div>
     <h2 style="margin-top:.8rem">Consent</h2>
     <p class="small">You are about to transcribe this meeting. Tell the other participants, and stop if anyone objects. Recording or transcribing without consent is unlawful in some places.</p>

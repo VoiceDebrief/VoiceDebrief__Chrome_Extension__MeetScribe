@@ -55,11 +55,12 @@ async function refresh() {
   if (!settings.apiKey) banner('warn', 'Set your OpenRouter key before starting.', { text: 'Open options', href: 'options.html' });
   else if (held.length) banner('err', `${held[0].lastError}: ${held.length} segment(s) are kept and will be sent once it is fixed.`, { text: 'Fix the key', href: 'options.html' });
   else if (startError) banner('err', startError);
-  else if (session?.mic?.error && ['capturing', 'paused', 'starting'].includes(session?.state)) banner('err', 'Your microphone is NOT being transcribed: ' + session.mic.error + '. The call is. To add your voice, allow the microphone on the options page, then Stop and Start again.', { text: 'Open options', href: 'options.html#microphone' });
+
   else if (session?.error) banner('warn', session.error);
   else if (!navigator.onLine && counts.pending) banner('warn', 'Offline: segments are saved and will be sent when the connection returns.');
   else banner();
 
+  micStrip();
   $('idle').hidden = state !== 'idle';
   $('active').hidden = !['capturing', 'paused', 'starting'].includes(state);
   const meetingId = session?.meetingId || session?.lastMeetingId || null;
@@ -108,13 +109,45 @@ function renderLines(items, meetingId) {
 $('consent').addEventListener('change', renderIdle);
 async function micPermission() {
   try { micGranted = (await navigator.permissions.query({ name: 'microphone' })).state; } catch { micGranted = 'unknown'; }
-  const want = $('useMic').checked;
-  $('micNote').hidden = !want;
-  $('micGrant').hidden = !want || micGranted === 'granted';
+  $('micNote').hidden = !$('useMic').checked;
+  micStrip();
 }
+const openMicOptions = () => chrome.tabs.create({ url: chrome.runtime.getURL('options.html#microphone') });
+
+/**
+ * The microphone strip, at the top of the panel in every state (the editor, after the second real call: "make it
+ * real obvious when that is not set"). Red: your voice is not, or would not be, transcribed. Amber: off or muted
+ * by choice. Green: your voice is being transcribed (or will be, at Start).
+ */
+let stripAction = null;
+function micStrip() {
+  const state = session?.state || 'idle';
+  const live = ['capturing', 'paused', 'starting'].includes(state);
+  let kind, text, action = null;
+  if (live) {
+    if (session?.mic?.error) { kind = 'bad'; text = '🎤 Your voice is NOT being transcribed: ' + session.mic.error + '.'; action = ['Fix the microphone', openMicOptions]; }
+    else if (!session?.mic?.enabled) { kind = 'warn'; text = '🎤 Your voice is not being transcribed: the microphone is off for this meeting. Only the call is.'; }
+    else if (session?.mic?.muted) { kind = 'warn'; text = '🎤 Your microphone is muted in MeetScribe: your voice is not being transcribed.'; action = ['Unmute', () => sw({ type: 'mic', muted: false }).then(refresh)]; }
+    else { kind = 'ok'; text = '🎤 Your voice is being transcribed (lines labelled You).'; }
+  } else if (micGranted !== 'granted') {
+    kind = 'bad';
+    text = micGranted === 'denied' ? '🎤 Microphone BLOCKED: your voice will NOT be transcribed. Allow it for MeetScribe in Chrome\'s site settings.'
+      : '🎤 Microphone NOT ALLOWED yet: your voice will NOT be transcribed, only the call.';
+    action = ['Allow the microphone', openMicOptions];
+  } else if (!$('useMic').checked) {
+    kind = 'warn'; text = '🎤 Microphone allowed, but off for the next meeting: only the call will be transcribed.';
+    action = ['Turn it on', () => { $('useMic').checked = true; micPermission(); }];
+  } else { kind = 'ok'; text = '🎤 Microphone allowed and on: your voice will be transcribed, labelled You.'; }
+  const el = $('micStrip');
+  el.className = 'strip ' + kind;
+  if ($('micStripText').textContent !== text) $('micStripText').textContent = text;
+  const b = $('micStripAction');
+  b.hidden = !action; if (action) { b.textContent = action[0]; stripAction = action[1]; }
+}
+$('micStripAction').addEventListener('click', () => stripAction && stripAction());
 $('useMic').addEventListener('change', micPermission);
-$('grantMic').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('options.html#microphone') }));
 window.addEventListener('focus', micPermission);
+navigator.permissions.query({ name: 'microphone' }).then(p => { p.onchange = micPermission; }).catch(() => {});
 $('copy').addEventListener('click', async () => { await navigator.clipboard.writeText($('notice').value); $('copied').textContent = 'Copied.'; });
 
 $('start').addEventListener('click', async () => {

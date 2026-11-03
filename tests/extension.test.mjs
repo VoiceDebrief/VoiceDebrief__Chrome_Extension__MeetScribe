@@ -426,8 +426,14 @@ describe('MeetScribe in Chromium', () => {
     // the test profile runs with --use-fake-ui-for-media-stream, so permission reads as granted or prompt; either way the
     // warning must match what Chrome reports
     const state = await panel.evaluate(() => navigator.permissions.query({ name: 'microphone' }).then(p => p.state));
-    assert.equal(await panel.isVisible('#micGrant'), state !== 'granted');
-    assert.equal(await panel.isVisible('#micNote'), true);
+    const cls = await panel.getAttribute('#micStrip', 'class');
+    if (state === 'granted') assert.match(cls, /\bok\b/); else { assert.match(cls, /\bbad\b/); assert.match(await panel.textContent('#micStrip'), /NOT/); }
+    await panel.uncheck('#useMic');
+    if (state === 'granted') {
+      await panel.waitForFunction(() => document.getElementById('micStrip').classList.contains('warn'), null, { timeout: 3000 });
+      assert.match(await panel.textContent('#micStrip'), /only the call/);
+    }
+    assert.equal(await panel.isVisible('#micStrip'), true, 'the strip is always there');
     await panel.close();
   });
 

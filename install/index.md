@@ -1,4 +1,4 @@
-# Install and use MeetScribe v0.3.3
+# Install and use MeetScribe v0.3.4
 
 > **Beta: do not use it for confidential meetings.** MeetScribe keeps everything in your browser, but the audio and transcript go to OpenRouter and on to a model provider, where we cannot see or verify what happens to them. [Where your audio goes](../index.md#where-your-audio-goes) has the detail.
 
@@ -34,7 +34,7 @@ Then **Load unpacked** and pick the repository's `extension/` folder. After a `g
 ![The options page](images/options.png)
 
 1. **OpenRouter key.** Paste a key you made for MeetScribe, **with a credit limit**, and press **Save and test**. It saves the key and shows its usage and limit.
-2. **Microphone.** Press **Allow the microphone** only if you want your own voice transcribed. Chrome asks here because the capture page is never shown and cannot ask.
+2. **Microphone.** Press **Allow the microphone** if you want your own voice transcribed. Until you do, the section is red, and so is the strip at the top of the side panel: *your voice will NOT be transcribed*. Chrome asks here because the capture page is never shown and cannot ask.
 3. **Where you hear the meeting.** Pick the headset or speakers you use for Meet, and press **Play a test tone**.
 4. **Model.** **Load the live list** shows every OpenRouter transcription model with its listed price per hour. `openai/whisper-large-v3` is the starting point until the Phase 0 bake-off picks a default.
 5. **The debrief.** Pick the language it is written in (voicedebrief.ai's four: English UK or US, Portuguese Portugal or Brazil). The model defaults to `google/gemini-3.5-flash`, as on voicedebrief.ai.
@@ -82,7 +82,7 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 
 ## A first test: a short script
 
-1. Install or update, and check the options page's footer shows **0.3.3**.
+1. Install or update, and check the options page's footer shows **0.3.4**.
 2. Make or reuse a capped OpenRouter key; **Save and test**.
 3. A two-person Meet call, headphones on, microphone **on**. Talk for five minutes, with one stretch muted in Meet only (S7).
 4. Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).

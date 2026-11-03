@@ -15,7 +15,7 @@ Site: **https://meetscribe.chrome-extension.voicedebrief.ai/**
 
 Then [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md). An hour of meeting costs roughly 5 to 15 US cents on OpenRouter (3 November 2026 prices); you pay OpenRouter directly, and MeetScribe charges nothing.
 
-**Status (3 November 2026): v0.3.3, beta.** 63 automated tests pass (Node and Chromium, fake audio, replayed OpenRouter responses). On real Meet calls, capturing the call works (v0.3.2); the microphone is being checked. [`built/index.md`](built/index.md) says what exists; [`install/index.md`](install/index.md) has the full guide with screenshots.
+**Status (3 November 2026): v0.3.4, beta.** 63 automated tests pass (Node and Chromium, fake audio, replayed OpenRouter responses). On real Meet calls, capturing the call works (v0.3.2); the microphone is being checked. [`built/index.md`](built/index.md) says what exists; [`install/index.md`](install/index.md) has the full guide with screenshots.
 
 ## The site's pages
 

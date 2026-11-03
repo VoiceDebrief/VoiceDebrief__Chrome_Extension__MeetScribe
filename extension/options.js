@@ -32,7 +32,9 @@ async function load() {
 async function devices(s) {
   let perm = 'prompt';
   try { perm = (await navigator.permissions.query({ name: 'microphone' })).state; } catch {}
-  say('micState', perm === 'granted' ? 'Allowed.' : perm === 'denied' ? 'Blocked: allow it in Chrome\'s site settings for this extension.' : 'Not allowed yet.', perm === 'granted' ? 'ok' : '');
+  say('micState', perm === 'granted' ? 'Allowed: your voice can be transcribed.' : perm === 'denied' ? 'BLOCKED: your voice will not be transcribed. Allow the microphone for MeetScribe in Chrome\'s site settings.' : 'NOT ALLOWED YET: your voice will not be transcribed until you press Allow the microphone.', perm === 'granted' ? 'ok' : 'err');
+  document.getElementById('grantMic').classList.toggle('primary', perm !== 'granted');
+  document.getElementById('microphone').closest('section').classList.toggle('mic-bad', perm !== 'granted');
   const list = await navigator.mediaDevices.enumerateDevices();
   const mic = $('micDevice'), out = $('outDevice');
   mic.replaceChildren(opt('', 'System default'), ...list.filter(d => d.kind === 'audioinput' && d.deviceId !== 'default').map(d => opt(d.deviceId, d.label || 'Microphone')));
