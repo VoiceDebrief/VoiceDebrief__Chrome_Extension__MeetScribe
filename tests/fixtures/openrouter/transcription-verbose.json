@@ -1,0 +1,15 @@
+{
+  "source": "shaped from OpenRouter's Speech-to-Text guide, 'Verbose transcripts' response example (3 Nov 2026); not recorded",
+  "status": 200,
+  "headers": { "x-generation-id": "gen-fixture-verbose" },
+  "body": {
+    "language": "en",
+    "duration": 6.4,
+    "text": "We need to agree on the project scope. I can prepare the first draft.",
+    "segments": [
+      { "id": 0, "start": 0.0, "end": 2.6, "text": "We need to agree on the project scope." },
+      { "id": 1, "start": 3.0, "end": 5.4, "text": "I can prepare the first draft." }
+    ],
+    "usage": { "seconds": 6.4, "cost": 0.000178 }
+  }
+}

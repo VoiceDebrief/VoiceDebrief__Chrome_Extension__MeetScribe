@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What is built in MeetScribe</title>
+<meta name="description" content="The reality file: what exists in the extension, how it is tested, what is not built yet, and what building it corrected in the brief.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="What is built in MeetScribe">
+<meta property="og:description" content="The reality file: what exists in the extension, how it is tested, what is not built yet, and what building it corrected in the brief.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">first MVP · not yet tried on a real call</span>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.2.0</a>
+  <a class="nl" href="../install/index.html">Install</a>
+  <a class="nl here" href="../built/index.html">Built</a>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / built</div>
+<h1 id="what-is-built-in-v0-2-0">What is built in v0.2.0</h1>
+<p>The first MVP: Phase 0's recorder plus most of Phase 1's queue. This page is the reality file: if something is not listed here as built, it does not exist yet, whatever <a href="../brief/index.html">brief v2.0</a> says.</p>
+<blockquote><p><strong>Tested in Chromium with a fake audio device and a local server replaying OpenRouter responses. Not yet tried on a real Google Meet call or with a real OpenRouter key.</strong> The replayed responses are shaped from OpenRouter's documented examples, not recorded. The first real run should record some to replace them (<code>tests/fixtures/openrouter/README.md</code>).</p></blockquote>
+<h2 id="built">Built</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Brief v2.0</th><th>What</th><th>Where</th><th>Tested</th></tr></thead>
+<tbody>
+<tr><td>4.1</td><td>Tab capture: stream ID from the side panel's Start click, redeemed in an offscreen document, played back so you keep hearing the meeting, on the output device you chose (<code>setSinkId</code>)</td><td><code>sidepanel.js</code>, <code>offscreen.js</code></td><td><span class="chip chip-built">built</span> in Chromium with a fake device standing in for the tab; <span class="chip chip-spike">spike</span> S1, S8 on a real call</td></tr>
+<tr><td>4.2</td><td>Microphone: opt-in per meeting, granted once on the options page, separate mute in the panel and on <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>, the &quot;separate from Meet's mute&quot; sentence</td><td><code>options.js</code>, <code>offscreen.js</code>, <code>service-worker.js</code></td><td><span class="chip chip-built">built</span> A8: no mic segments when off, none while muted</td></tr>
+<tr><td>4.3</td><td>AudioWorklet taps in a 16 kHz context (resampled in JS if Chrome refuses the rate); one sample clock per channel</td><td><code>worklet.js</code>, <code>offscreen.js</code></td><td><span class="chip chip-built">built</span></td></tr>
+<tr><td>4.4</td><td>Cuts at pauses: energy against an adaptive floor, 8 s minimum, 600 ms pause, 2 s idle close, 30 s forced cut, silence dropped</td><td><code>lib/vad.js</code></td><td><span class="chip chip-built">built</span> 8 unit tests on audio with a known shape</td></tr>
+<tr><td>4.5</td><td>Each segment is checked by its bytes before sending; one that fails is kept as <code>invalid</code>, never sent</td><td><code>lib/wav.js</code>, <code>lib/queue.js</code></td><td><span class="chip chip-built">built</span> unit and Chromium</td></tr>
+<tr><td>5.1 to 5.4</td><td>The request (<code>verbose_json</code>, <code>provider.zdr</code>), fallback to <code>json</code> remembered per model, the errors table, backoff with jitter and <code>Retry-After</code>, the key check on a network-shaped error, leases</td><td><code>lib/openrouter.js</code>, <code>lib/queue.js</code>, <code>lib/db.js</code></td><td><span class="chip chip-built">built</span> A4 (no double send under two drains), A7, retry, fallback</td></tr>
+<tr><td>6</td><td>Lines from model output kept as returned; gaps shown; <strong>You</strong> and <strong>Meeting</strong> by channel; <code>probable-echo</code> and <code>suspect</code> flags; <code>≈</code> for times that are a segment's start</td><td><code>lib/transcript.js</code></td><td><span class="chip chip-built">built</span></td></tr>
+<tr><td>8</td><td>IndexedDB without a library: meetings, segments, audio apart, lines; <code>unlimitedStorage</code>; retention of transcribed audio; delete a meeting; delete all</td><td><code>lib/db.js</code></td><td><span class="chip chip-built">built</span> A12</td></tr>
+<tr><td>9</td><td>The manifest exactly as specified; the validator refuses any other</td><td><code>manifest.json</code>, <code>admin/build/validate.mjs</code></td><td><span class="chip chip-built">built</span></td></tr>
+<tr><td>10</td><td>Side panel, options (key test, microphone grant, devices, live model list, retention, provenance), meetings page (play the audio a line came from, retry, export TXT, Markdown, JSON, delete)</td><td><code>sidepanel.*</code>, <code>options.*</code>, <code>meetings.*</code></td><td><span class="chip chip-built">built</span> pages load without errors</td></tr>
+<tr><td>14</td><td>Session states, stop on tab close, an interrupted capture marked after a restart, the queue resumed by an alarm</td><td><code>service-worker.js</code></td><td><span class="chip chip-built">built</span> in part: restart recovery is not yet tested</td></tr>
+</tbody></table></div>
+<h2 id="not-built-yet">Not built yet</h2>
+<ul>
+<li>Summaries, translation, the declared workflow (brief v2.0, section 7). Phase 2.</li>
+<li>Edits as a revision layer (6.3). The transcript is read-only.</li>
+<li>A per-meeting budget, and enabling the icon only on Meet pages through <code>declarativeContent</code>. It is not in the manifest, because a permission nothing uses is a permission too many.</li>
+<li>A release zip and the Chrome Web Store.</li>
+</ul>
+<h2 id="what-building-it-corrected">What building it corrected</h2>
+<p>These go into the brief's next version.</p>
+<ol>
+<li><strong>An offscreen document has <code>chrome.runtime</code> and nothing else.</strong> Brief v2.0 has the offscreen document drain the queue, and the queue reads its settings from <code>chrome.storage</code>, which does not exist there. The first Chromium run showed segments stuck in <code>sending</code>: the error came after the lease was taken. Now the offscreen document asks the service worker for settings, and an unexpected error gives the lease back at once instead of stranding the segment for 90 seconds.</li>
+<li><strong>A drain needs a way to hand back a lease on any error, not only on the ones it expects.</strong> This was the same incident; <code>processOne</code> now wraps the whole send.</li>
+<li><strong>The microphone's clock starts later than the tab's.</strong> <code>getUserMedia</code> takes time, so the microphone channel's first sample is set from the capture context's current time, not zero. Otherwise a <strong>You</strong> line would sort before the <strong>Meeting</strong> line it answers.</li>
+</ol>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. First MVP, loaded unpacked. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.2.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../install/index.html">Install and use</a>
+    <a href="../built/index.html">What is built</a>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../versions/index.html">Release history</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

@@ -1,11 +1,13 @@
 # MeetScribe
 
-> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Status on 3 November 2026: SPECIFIED, NOT BUILT. This site holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
+> A Chrome extension that transcribes the Google Meet call you are in, through OpenRouter's speech-to-text endpoint on the user's own key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Status on 3 November 2026: v0.2.0, THE FIRST MVP, BUILT AND TESTED IN CHROMIUM WITH FAKE AUDIO AND REPLAYED RESPONSES, NOT YET TRIED ON A REAL MEET CALL. Loaded unpacked from extension/. This site also holds the review of the first brief (v1.0, drafted by ChatGPT), the brief v2.0 that replaces it, and the plan.
 
-Site v0.1.0. Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. Paths are relative to this file, because the site's domain is not decided yet.
+Site and extension v0.2.0 (one version, admin/build/version.txt; every push to dev is a tagged release). Every page is generated from the markdown twin at the same path (index.md beside index.html); links below point at the markdown. Paths are relative to this file, because the site's domain is not decided yet.
 
 ## Read first
 
+- [Install and use](install/index.md): load extension/ unpacked, the OpenRouter key, the microphone grant, a meeting, the meetings page; the spike questions this build answers.
+- [What is built](built/index.md): the reality file. If it is not listed there as built, it does not exist.
 - [Home](index.md): what MeetScribe is, the one rule, whether it is feasible, the four findings that matter most.
 - [Review of brief v1.0](review/index.md): 14 claims that hold (with evidence), 6 choices that fail silently (R1 to R6), 11 gaps (R7 to R17), 6 changes (R18 to R23), and a verdict per section.
 - [Brief v2.0](brief/index.md): the specification. Capture (tab and opt-in microphone, AudioWorklet to 16 kHz PCM, WAV per segment, cuts at pauses), the OpenRouter queue with leases and an errors table, transcript lines that are never overwritten, notes with segment citations, storage types, permissions, privacy and consent, acceptance criteria A1 to A13.
@@ -16,13 +18,16 @@ Site v0.1.0. Every page is generated from the markdown twin at the same path (in
 - [Transcription models](models/index.md): every OpenRouter speech-to-text model with price per hour, generated from a dated snapshot.
 - [data/stt-models.json](data/stt-models.json): the snapshot itself (GET /api/v1/models?output_modalities=transcription plus each model's endpoints), with fetched_at.
 - [Sources](sources/index.md): every external fact and where it was read.
+- [Release history](versions/index.md): every release with what changed.
 - [Brief v1.0, as received](brief/v1/index.md): the original, unedited below its header. Superseded; do not build from it.
 
 ## Facts an agent may need
 
-- Status words on this site: "specified" is in brief v2.0 and not built; "spike" is a question Phase 0 must answer; "proposed" is an idea the editor has not accepted. Nothing is "built".
+- Status words on this site: "built" is in the extension and tested; "specified" is in brief v2.0 and not built; "spike" is a question Phase 0 must answer on a real call; "proposed" is an idea the editor has not accepted.
 - The one rule: MeetScribe listens only while you can see that it is listening, keeps every second it heard until that second is transcribed or you delete it, and never shows a guess as a fact.
-- Planned manifest: Manifest V3, minimum Chrome 116; permissions tabCapture, offscreen, activeTab, sidePanel, declarativeContent, storage, unlimitedStorage, alarms; host_permissions https://openrouter.ai/* only; CSP script-src 'self'; connect-src https://openrouter.ai.
+- Manifest (built, and enforced by the validator): Manifest V3, minimum Chrome 116; permissions tabCapture, offscreen, activeTab, sidePanel, storage, unlimitedStorage, alarms (declarativeContent is in the brief, not yet used, so not requested); host_permissions https://openrouter.ai/* only; CSP script-src 'self'; connect-src https://openrouter.ai.
 - Endpoint: POST https://openrouter.ai/api/v1/audio/transcriptions with input_audio {data, format: "wav"}, response_format "verbose_json" (fallback "json"), provider {zdr: true}. Upstream timeout 60 s. Cost from usage.cost; null when absent, never 0.
 - Repository: https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe
 - Family: https://voicedebrief.ai (the product family), https://chrome-extensions.sgit.ai (how extensions are built here), https://fix-the-page.chrome-extension.sgit.ai (the sibling extension).
+- Code: extension/lib/{wav,vad,openrouter,queue,transcript,db,settings}.js are plain ES modules with no chrome.* except db (IndexedDB) and settings; tests/unit.test.mjs runs them in Node. tests/extension.test.mjs loads a TEST build in Chromium with a fake audio device and tests/helpers/replay.mjs as OpenRouter.
+- An offscreen document has chrome.runtime only: it reads settings through the service worker (found while building; see built/index.md).

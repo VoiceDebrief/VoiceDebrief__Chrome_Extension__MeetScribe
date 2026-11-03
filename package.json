@@ -1,0 +1,19 @@
+{
+  "name": "meetscribe",
+  "version": "0.2.0",
+  "private": true,
+  "description": "MeetScribe: transcribe the Google Meet call you are in, on your own OpenRouter key. Extension and site source.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "test:unit": "node --test tests/unit.test.mjs",
+    "test:extension": "node tests/run.mjs extension",
+    "stamp": "node admin/build/package.mjs",
+    "build": "node admin/build/build.mjs",
+    "validate": "node admin/build/validate.mjs",
+    "icons": "node admin/build/icons.mjs",
+    "screenshots": "node admin/build/screenshots.mjs"
+  },
+  "devDependencies": {}
+}

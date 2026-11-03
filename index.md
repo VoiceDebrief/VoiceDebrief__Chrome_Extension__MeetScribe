@@ -2,7 +2,7 @@
 
 A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Your words are labelled **You**, everyone else's **Meeting**, and every point in the notes links back to the lines it came from.
 
-> **Status, 3 November 2026: specified, not built.** This site holds the [review](review/index.md) of the first brief, the [brief v2.0](brief/index.md) that replaces it, and the [plan](plan/index.md), which starts with a two-to-three-day spike. There is no extension to install yet.
+> **Status, 3 November 2026: v0.2.0, the first MVP, loads unpacked from a clone.** [Install and use it](install/index.md). It captures the meeting and, if you opt in, your microphone; cuts both at pauses; checks and stores every segment before sending it to OpenRouter; and shows the transcript live in Chrome's side panel, with exports. It has been tested in Chromium with fake audio and replayed responses (38 tests), **not yet on a real Meet call**. [What is built](built/index.md) is the honest list; notes and summaries are next.
 
 ## The one rule
 
@@ -25,6 +25,8 @@ The [review](review/index.md) has all 23 findings, the 14 claims that held, and 
 
 ## Read
 
+- [Install and use v0.2.0](install/index.md): load unpacked, set the key, transcribe a call; how to answer the spike questions with it.
+- [What is built](built/index.md): the reality file, with what building it corrected.
 - [Review of brief v1.0](review/index.md): what holds, what is wrong, what is missing, what to change, with evidence.
 - [Brief v2.0](brief/index.md): the specification to build from.
 - [The plan](plan/index.md): Phase 0's eight go/no-go questions and the model bake-off, then three releases.

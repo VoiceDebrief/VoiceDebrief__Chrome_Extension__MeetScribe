@@ -1,0 +1,1 @@
+{ "source": "shaped from OpenRouter's Speech-to-Text guide: providers without structured output reject verbose_json with a 400; message text not recorded", "status": 400, "headers": {}, "body": { "error": { "code": 400, "message": "response_format verbose_json is not supported by this model" } } }

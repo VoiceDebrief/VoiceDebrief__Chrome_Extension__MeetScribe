@@ -237,3 +237,5 @@ main.doc .tablewrap table{margin:0}
 main.doc .tablewrap{margin:1.1rem 0}
 nav.site a.nl.here{color:var(--fg);font-weight:600}
 nav.site span.ver{font-family:var(--mono);font-size:.68rem;color:var(--dim2);border:1px solid var(--line);border-radius:99px;padding:.14rem .55rem;white-space:nowrap}
+main.doc img.shot{display:block;max-width:100%;height:auto;margin:1rem 0;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+nav.site a.ver{font-family:var(--mono);font-size:.68rem;color:var(--dim2);border:1px solid var(--line);border-radius:99px;padding:.14rem .55rem;white-space:nowrap}

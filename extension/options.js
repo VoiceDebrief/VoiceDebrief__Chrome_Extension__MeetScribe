@@ -1,0 +1,100 @@
+// Options (brief v2.0, 10): key with a test, the microphone grant (the offscreen document cannot ask), devices,
+// model, language, data policy, retention, delete all, and build provenance.
+import * as db from './lib/db.js';
+import { getSettings, setSettings, maskKey } from './lib/settings.js';
+import { checkKey, listTranscriptionModels, API_BASE } from './lib/openrouter.js';
+import { BUILD } from './build.js';
+
+const $ = (id) => document.getElementById(id);
+const say = (id, text, cls = '') => { $(id).textContent = text; $(id).className = 'small ' + cls; };
+const apiBase = (s) => (BUILD.test && s.apiBase ? s.apiBase : API_BASE);
+const opt = (value, text) => { const o = document.createElement('option'); o.value = value; o.textContent = text; return o; };
+
+$('ver').textContent = 'v' + BUILD.version + (BUILD.test ? ' TEST' : '');
+$('provenance').textContent = `MeetScribe ${BUILD.version}${BUILD.test ? ' (TEST BUILD)' : ''} · commit ${BUILD.commit ? BUILD.commit.slice(0, 12) : 'unstamped'} · built ${BUILD.built_at || 'unstamped'}`;
+
+async function load() {
+  const s = await getSettings();
+  $('key').value = ''; $('key').placeholder = s.apiKey ? maskKey(s.apiKey) + ' (saved)' : 'sk-or-v1-…';
+  $('language').value = s.language; $('zdr').checked = s.zdr; $('micDefault').checked = s.micDefault;
+  $('retention').value = String(s.retentionDays);
+  const sel = $('model'); if (![...sel.options].some(o => o.value === s.model)) sel.append(opt(s.model, s.model)); sel.value = s.model;
+  await devices(s);
+  const t = await db.totals();
+  $('totals').textContent = `${t.meetings} meeting(s), ${t.segments} segment(s), ${t.wavs} with audio kept, ${t.lines} transcript line(s).`;
+}
+
+async function devices(s) {
+  let perm = 'prompt';
+  try { perm = (await navigator.permissions.query({ name: 'microphone' })).state; } catch {}
+  say('micState', perm === 'granted' ? 'Allowed.' : perm === 'denied' ? 'Blocked: allow it in Chrome\'s site settings for this extension.' : 'Not allowed yet.', perm === 'granted' ? 'ok' : '');
+  const list = await navigator.mediaDevices.enumerateDevices();
+  const mic = $('micDevice'), out = $('outDevice');
+  mic.replaceChildren(opt('', 'System default'), ...list.filter(d => d.kind === 'audioinput' && d.deviceId !== 'default').map(d => opt(d.deviceId, d.label || 'Microphone')));
+  out.replaceChildren(opt('', 'System default'), ...list.filter(d => d.kind === 'audiooutput' && d.deviceId !== 'default').map(d => opt(d.deviceId, d.label || 'Speaker')));
+  mic.value = s.micDeviceId; out.value = s.outputDeviceId;
+  if (mic.value !== s.micDeviceId) mic.value = ''; if (out.value !== s.outputDeviceId) out.value = '';
+}
+
+const saved = () => { $('saved').textContent = 'Saved ' + new Date().toLocaleTimeString(); };
+
+$('saveKey').addEventListener('click', async () => {
+  const k = $('key').value.trim();
+  if (!k) return say('keyState', 'Paste a key first.', '');
+  await setSettings({ apiKey: k });
+  await db.resumeHeld();                         // segments held for a key problem go back in the queue
+  chrome.runtime.sendMessage({ target: 'sw', type: 'drain' }).catch(() => {});
+  $('key').value = ''; await load(); say('keyState', 'Saved. Segments held for a key problem will be sent.', 'ok');
+});
+$('clearKey').addEventListener('click', async () => { await setSettings({ apiKey: '' }); await load(); say('keyState', 'Key removed.', ''); });
+$('testKey').addEventListener('click', async () => {
+  const s = await getSettings();
+  const key = $('key').value.trim() || s.apiKey;
+  if (!key) return say('keyState', 'No key to test.', '');
+  say('keyState', 'Testing…');
+  const r = await checkKey({ apiBase: apiBase(s), key });
+  if (r.ok) say('keyState', `The key works${r.label ? ' (' + r.label + ')' : ''}. Usage $${r.usage ?? '?'}; limit ${r.limit === null ? 'none set: set one on openrouter.ai' : '$' + r.limit}.`, 'ok');
+  else say('keyState', r.status === 401 || r.status === 403 ? 'OpenRouter rejected this key.' : `Could not check the key (${r.status || 'network'}).`, '');
+});
+
+$('grantMic').addEventListener('click', async () => {
+  try { const m = await navigator.mediaDevices.getUserMedia({ audio: true }); m.getTracks().forEach(t => t.stop()); }
+  catch (e) { say('micState', 'Not allowed: ' + e.message, ''); return; }
+  await devices(await getSettings());
+});
+$('micDevice').addEventListener('change', async () => { await setSettings({ micDeviceId: $('micDevice').value }); saved(); });
+$('outDevice').addEventListener('change', async () => { await setSettings({ outputDeviceId: $('outDevice').value }); saved(); });
+$('micDefault').addEventListener('change', async () => { await setSettings({ micDefault: $('micDefault').checked }); saved(); });
+$('testTone').addEventListener('click', async () => {
+  const ctx = new AudioContext();
+  if ($('outDevice').value && ctx.setSinkId) await ctx.setSinkId($('outDevice').value).catch(() => {});
+  const o = ctx.createOscillator(), g = ctx.createGain(); g.gain.value = 0.1; o.frequency.value = 660;
+  o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.6); o.onended = () => ctx.close();
+});
+
+$('loadModels').addEventListener('click', async () => {
+  const s = await getSettings();
+  try {
+    const models = await listTranscriptionModels({ apiBase: apiBase(s) });
+    const per = (m) => (+m.completion > 0 ? 'token-priced' : +m.prompt < 0.01 ? '$' + (+m.prompt * 3600).toFixed(3) + '/h' : 'price unit not stated');
+    $('model').replaceChildren(...models.map(m => opt(m.id, `${m.id} (${per(m)})`)));
+    if (![...$('model').options].some(o => o.value === s.model)) $('model').append(opt(s.model, s.model));
+    $('model').value = s.model;
+    $('modelNote').textContent = `${models.length} transcription models listed by OpenRouter now. The cost shown in a meeting is what OpenRouter reports per request, not this list.`;
+  } catch (e) { $('modelNote').textContent = 'Could not load the list: ' + e.message; }
+});
+$('model').addEventListener('change', async () => { await setSettings({ model: $('model').value }); saved(); });
+$('language').addEventListener('change', async () => { await setSettings({ language: $('language').value.trim().toLowerCase() }); saved(); });
+$('zdr').addEventListener('change', async () => { await setSettings({ zdr: $('zdr').checked }); saved(); });
+$('retention').addEventListener('change', async () => { await setSettings({ retentionDays: Number($('retention').value) }); saved(); });
+
+$('deleteAll').addEventListener('click', async () => {
+  if (!confirm('Delete every meeting, transcript and stored audio in MeetScribe? This cannot be undone. Your settings and key are kept.')) return;
+  const before = await db.totals();
+  await db.deleteAll();
+  $('deleted').textContent = `Deleted ${before.meetings} meeting(s), ${before.segments} segment(s), ${before.lines} line(s).`;
+  await load();
+});
+
+navigator.storage?.persist?.();
+load();

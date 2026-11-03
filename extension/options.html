@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-GB">
+<head><meta charset="utf-8"><title>MeetScribe options</title><link rel="stylesheet" href="ui.css">
+<style>main{max-width:760px;margin:0 auto} input[type=password],input[type=text]{width:100%}</style></head>
+<body>
+<header class="bar"><span class="brand">meet<span>scribe</span></span><span class="ver" id="ver"></span><nav><a href="meetings.html">Meetings</a></nav></header>
+<main>
+  <section class="box">
+    <h2>1. OpenRouter key</h2>
+    <p class="small">Use a key made for MeetScribe, with a credit limit: that limit is the real spending cap. The key is kept in this browser profile and sent only to openrouter.ai.</p>
+    <div class="row"><input type="password" id="key" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false"></div>
+    <div class="row"><button class="primary" id="saveKey">Save</button><button id="testKey">Test the key</button><button id="clearKey">Clear</button></div>
+    <div class="small" id="keyState"></div>
+  </section>
+
+  <section class="box">
+    <h2>2. Microphone</h2>
+    <p class="small">Needed only if you want your own voice transcribed (labelled <b>You</b>). Chrome asks once, here; the capture page cannot ask, because it is never shown.</p>
+    <div class="row"><button id="grantMic">Allow the microphone</button><span class="small" id="micState"></span></div>
+    <div class="row"><label for="micDevice" class="small">Microphone</label><select id="micDevice"></select></div>
+    <label class="row small"><input type="checkbox" id="micDefault"> Tick "also transcribe my microphone" by default</label>
+  </section>
+
+  <section class="box">
+    <h2>3. Where you hear the meeting</h2>
+    <p class="small">Capturing a tab silences it, so MeetScribe plays it back. Pick the device you use for Meet, or the meeting may move to another speaker when capture starts.</p>
+    <div class="row"><select id="outDevice"></select><button id="testTone">Play a test tone</button></div>
+  </section>
+
+  <section class="box">
+    <h2>4. Transcription</h2>
+    <div class="row"><label for="model" class="small">Model</label><select id="model"></select><button id="loadModels">Load the live list</button></div>
+    <p class="small dim" id="modelNote">Until the Phase 0 bake-off picks a default, <span class="mono">openai/whisper-large-v3</span> is the starting point.</p>
+    <div class="row"><label for="language" class="small">Language</label><input type="text" id="language" placeholder="auto-detect (or en, pt, …)" style="width:12rem"></div>
+    <label class="row small"><input type="checkbox" id="zdr"> Ask OpenRouter for zero-data-retention providers only</label>
+  </section>
+
+  <section class="box">
+    <h2>5. Storage</h2>
+    <div class="row small"><label for="retention">Delete the audio of transcribed segments after</label>
+      <select id="retention"><option value="0">immediately</option><option value="7">7 days</option><option value="30">30 days</option><option value="-1">never</option></select></div>
+    <p class="small dim" id="totals"></p>
+    <div class="row"><button class="danger" id="deleteAll">Delete all MeetScribe data</button><span class="small" id="deleted"></span></div>
+  </section>
+
+  <p class="small dim" id="saved"></p>
+  <p class="small dim mono" id="provenance"></p>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Install and use MeetScribe</title>
+<meta name="description" content="Load MeetScribe unpacked from a clone, set the OpenRouter key and microphone, and transcribe a Meet call; with screenshots and how to answer the spike questions.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="Install and use MeetScribe">
+<meta property="og:description" content="Load MeetScribe unpacked from a clone, set the OpenRouter key and microphone, and transcribe a Meet call; with screenshots and how to answer the spike questions.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">first MVP · not yet tried on a real call</span>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.2.0</a>
+  <a class="nl here" href="../install/index.html">Install</a>
+  <a class="nl" href="../built/index.html">Built</a>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / install</div>
+<h1 id="install-and-use-meetscribe-v0-2-0">Install and use MeetScribe v0.2.0</h1>
+<p>The first MVP, loaded unpacked from a clone of the repository. No Chrome Web Store, no zip: Chrome runs the files in <code>extension/</code> as they are in the repository.</p>
+<h2 id="install">Install</h2>
+<ol>
+<li>Clone the repository (default branch <code>dev</code>): <code>git clone https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe</code></li>
+<li>Open <code>chrome://extensions</code> and turn on <strong>Developer mode</strong>.</li>
+<li><strong>Load unpacked</strong>, and pick the <code>extension/</code> folder.</li>
+<li>Pin MeetScribe to the toolbar. The options page opens by itself the first time.</li>
+</ol>
+<p>After a <code>git pull</code>, press the reload arrow on MeetScribe's card in <code>chrome://extensions</code>. The options page shows the version, commit and build time, so you can check which build is running.</p>
+<h2 id="set-up-once">Set up (once)</h2>
+<p><img class="shot" src="images/options.png" alt="The options page" loading="lazy"></p>
+<ol>
+<li><strong>OpenRouter key.</strong> Paste a key you made for MeetScribe, <strong>with a credit limit</strong>, then Save and <strong>Test the key</strong>. The test shows the key's usage and limit.</li>
+<li><strong>Microphone.</strong> Press <strong>Allow the microphone</strong> only if you want your own voice transcribed. Chrome asks here because the capture page is never shown and cannot ask.</li>
+<li><strong>Where you hear the meeting.</strong> Pick the headset or speakers you use for Meet, and press <strong>Play a test tone</strong>.</li>
+<li><strong>Model.</strong> <strong>Load the live list</strong> shows every OpenRouter transcription model with its listed price per hour. <code>openai/whisper-large-v3</code> is the starting point until the Phase 0 bake-off picks a default.</li>
+</ol>
+<h2 id="use-it-in-a-meeting">Use it in a meeting</h2>
+<p><img class="shot" src="images/panel-start.png" alt="The side panel before starting" loading="lazy"></p>
+<ol>
+<li>Join the Meet call. While on the Meet tab, click the MeetScribe icon (or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>). The side panel opens beside Meet.</li>
+<li>If you want your own voice too, tick <strong>Also transcribe my microphone</strong>. It is separate from Meet's mute: use the panel's <strong>Mute my mic</strong> or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>.</li>
+<li>Tell the participants: <strong>Copy notice for Meet's chat</strong> and paste it into the chat. Then tick <strong>I have told the participants</strong> and press <strong>Start transcribing</strong>. The icon shows <strong>REC</strong>.</li>
+<li>Lines appear in the panel a few seconds after each pause in speech. <strong>Meeting</strong> is the call; <strong>You</strong> is your microphone. Dimmed lines are flagged (<code>probable-echo</code>, <code>suspect</code>), never deleted.</li>
+<li><strong>Stop</strong>, or close the Meet tab. MeetScribe sends what is still waiting and marks the meeting complete.</li>
+</ol>
+<p><img class="shot" src="images/panel-live.png" alt="The side panel during a meeting (test build, fake audio)" loading="lazy"></p>
+<h2 id="afterwards">Afterwards</h2>
+<p><strong>Meetings</strong> (in the panel's header) lists every meeting. You can read the transcript with its gaps, play the audio any line came from (▶), retry failed segments, export TXT, Markdown or JSON, and delete a meeting. <strong>Delete all MeetScribe data</strong> is on the options page.</p>
+<p><img class="shot" src="images/meetings.png" alt="A meeting (test build, fake audio: the same audio on both channels, so every &quot;You&quot; line is a probable echo)" loading="lazy"></p>
+<h2 id="what-this-build-answers-for-the-phase-0-spike">What this build answers for the Phase 0 spike</h2>
+<p>Each spike question from <a href="../plan/index.html">the plan</a> can be answered with this build on a real call. Please note what you see:</p>
+<div class="tablewrap"><table>
+<thead><tr><th></th><th>Question</th><th>How to see it</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>Does Start in the side panel capture the Meet tab?</td><td>If not, the panel says &quot;Chrome would not capture this tab&quot; and quotes Chrome's message</td></tr>
+<tr><td>S2</td><td>Does the microphone work in the capture page after the one-time grant?</td><td>A microphone problem shows under the meters and on the meeting page</td></tr>
+<tr><td>S3</td><td>How much of the meeting leaks into your microphone on speakers?</td><td>Count the dimmed <code>probable-echo</code> lines with and without headphones</td></tr>
+<tr><td>S4</td><td>Memory over 2 hours</td><td><code>chrome://extensions</code>, MeetScribe, inspect <code>offscreen.html</code>, Memory tab</td></tr>
+<tr><td>S5</td><td>Do the cuts fall between words?</td><td>The meeting page's &quot;forced cut(s)&quot; count; play a segment with ▶</td></tr>
+<tr><td>S6</td><td>Which model?</td><td>Change the model on the options page between meetings; the meeting page shows the cost OpenRouter reported</td></tr>
+<tr><td>S7</td><td>Is the mic captured while muted in Meet?</td><td>Mute in Meet only and speak: a <strong>You</strong> line appears (expected: yes)</td></tr>
+<tr><td>S8</td><td>Does the meeting stay on your headset?</td><td>Pick it in options; listen when you press Start</td></tr>
+</tbody></table></div>
+<h2 id="for-developers">For developers</h2>
+<pre><code>npm test                              # unit tests in Node + the extension in Chromium (needs Playwright with Chromium)
+node admin/build/package.mjs          # stamp extension/build.js (version, commit, time)
+node admin/build/validate.mjs         # the gate: site, manifest, code rules, versions
+node admin/build/screenshots.mjs      # the screenshots on this page, from the test build</code></pre>
+<p>Playwright: <code>npm install --no-save playwright@1.63.0 &amp;&amp; npx playwright install chromium</code>. The tests load a TEST build (<code>tests/.build/extension-test</code>). It is marked in its name, and its CSP also allows <code>127.0.0.1</code>, where a local server replays OpenRouter responses. Chromium's fake audio device plays a WAV with a known shape of speech and pauses.</p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. First MVP, loaded unpacked. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.2.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../install/index.html">Install and use</a>
+    <a href="../built/index.html">What is built</a>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../versions/index.html">Release history</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

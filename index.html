@@ -17,8 +17,10 @@
 
 <nav class="site"><div class="row">
   <a class="brand" href="index.html">meetscribe<span>.chrome-extension</span></a>
-  <span class="stage-pill">specified · not built</span>
-  <span class="ver" title="Site version">v0.1.0</span>
+  <span class="stage-pill">first MVP · not yet tried on a real call</span>
+  <a class="ver" href="versions/index.html" title="Release history">v0.2.0</a>
+  <a class="nl" href="install/index.html">Install</a>
+  <a class="nl" href="built/index.html">Built</a>
   <a class="nl" href="review/index.html">Review</a>
   <a class="nl" href="brief/index.html">Brief v2.0</a>
   <a class="nl" href="plan/index.html">Plan</a>
@@ -30,7 +32,7 @@
 <main class="doc">
 <h1 id="meetscribe">MeetScribe</h1>
 <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours. Your words are labelled <strong>You</strong>, everyone else's <strong>Meeting</strong>, and every point in the notes links back to the lines it came from.</p>
-<blockquote><p><strong>Status, 3 November 2026: specified, not built.</strong> This site holds the <a href="review/index.html">review</a> of the first brief, the <a href="brief/index.html">brief v2.0</a> that replaces it, and the <a href="plan/index.html">plan</a>, which starts with a two-to-three-day spike. There is no extension to install yet.</p></blockquote>
+<blockquote><p><strong>Status, 3 November 2026: v0.2.0, the first MVP, loads unpacked from a clone.</strong> <a href="install/index.html">Install and use it</a>. It captures the meeting and, if you opt in, your microphone; cuts both at pauses; checks and stores every segment before sending it to OpenRouter; and shows the transcript live in Chrome's side panel, with exports. It has been tested in Chromium with fake audio and replayed responses (38 tests), <strong>not yet on a real Meet call</strong>. <a href="built/index.html">What is built</a> is the honest list; notes and summaries are next.</p></blockquote>
 <h2 id="the-one-rule">The one rule</h2>
 <blockquote><p><strong>MeetScribe listens only while you can see that it is listening, keeps every second it heard until that second is transcribed or you delete it, and never shows a guess as a fact.</strong></p></blockquote>
 <h2 id="is-it-feasible">Is it feasible?</h2>
@@ -47,6 +49,8 @@
 <p>The <a href="review/index.html">review</a> has all 23 findings, the 14 claims that held, and a verdict on every section of v1.0.</p>
 <h2 id="read">Read</h2>
 <ul>
+<li><a href="install/index.html">Install and use v0.2.0</a>: load unpacked, set the key, transcribe a call; how to answer the spike questions with it.</li>
+<li><a href="built/index.html">What is built</a>: the reality file, with what building it corrected.</li>
 <li><a href="review/index.html">Review of brief v1.0</a>: what holds, what is wrong, what is missing, what to change, with evidence.</li>
 <li><a href="brief/index.html">Brief v2.0</a>: the specification to build from.</li>
 <li><a href="plan/index.html">The plan</a>: Phase 0's eight go/no-go questions and the model bake-off, then three releases.</li>
@@ -61,12 +65,14 @@
 <footer class="site"><div class="cols">
   <div>
     <div class="brandline">meetscribe<span>.chrome-extension</span></div>
-    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. Specified, not built. Content CC BY 4.0; code Apache 2.0.</p>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. First MVP, loaded unpacked. Content CC BY 4.0; code Apache 2.0.</p>
     <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
-    <p class="verline">site v0.1.0 · <a href="index.md">this page as markdown</a> · <a href="llms.txt">llms.txt</a></p>
+    <p class="verline">site v0.2.0 · <a href="index.md">this page as markdown</a> · <a href="llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>
+    <a href="install/index.html">Install and use</a>
+    <a href="built/index.html">What is built</a>
     <a href="review/index.html">Review of v1.0</a>
     <a href="brief/index.html">Brief v2.0</a>
     <a href="plan/index.html">Plan</a>
@@ -75,6 +81,7 @@
   <div>
     <h4>Record</h4>
     <a href="sources/index.html">Sources</a>
+    <a href="versions/index.html">Release history</a>
     <a href="brief/v1/index.html">Brief v1.0, as received</a>
     <a href="data/stt-models.json">stt-models.json</a>
     <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>

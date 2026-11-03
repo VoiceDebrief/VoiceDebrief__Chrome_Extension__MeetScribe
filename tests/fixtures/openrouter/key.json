@@ -1,0 +1,1 @@
+{ "source": "shaped from OpenRouter's GET /api/v1/key reference; not recorded", "status": 200, "headers": {}, "body": { "data": { "label": "meetscribe-test", "usage": 0.42, "limit": 5, "limit_remaining": 4.58 } } }

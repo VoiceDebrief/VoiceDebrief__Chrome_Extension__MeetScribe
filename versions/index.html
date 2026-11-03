@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetScribe release history</title>
+<meta name="description" content="Every MeetScribe release, site and extension, with what changed.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MeetScribe">
+<meta property="og:title" content="MeetScribe release history">
+<meta property="og:description" content="Every MeetScribe release, site and extension, with what changed.">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">meetscribe<span>.chrome-extension</span></a>
+  <span class="stage-pill">first MVP · not yet tried on a real call</span>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.2.0</a>
+  <a class="nl" href="../install/index.html">Install</a>
+  <a class="nl" href="../built/index.html">Built</a>
+  <a class="nl" href="../review/index.html">Review</a>
+  <a class="nl" href="../brief/index.html">Brief v2.0</a>
+  <a class="nl" href="../plan/index.html">Plan</a>
+  <a class="nl" href="../models/index.html">Models</a>
+  <a class="nl" href="../sources/index.html">Sources</a>
+  <a class="gh" href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">&#9733; GitHub</a>
+</div></nav>
+
+<main class="doc">
+<div class="crumb"><a href="../index.html">MeetScribe</a> / versions</div>
+<h1 id="release-history">Release history</h1>
+<p>One version for the site and the extension, in <code>admin/build/version.txt</code>. Every push to <code>dev</code> is a release: CI validates, runs the tests, tags <code>vX.Y.Z</code> on the commit whose subject carries it (<code>site vX.Y.Z: ...</code>), then publishes the site.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
+<tbody>
+<tr><td>v0.2.0</td><td>3 November 2026</td><td>The first MVP of the extension: tab capture played back on your device, an opt-in microphone with its own mute, 16 kHz taps cut at pauses, every segment checked and persisted before it is sent, the OpenRouter queue with leases, retries and the key check, the side panel, options and meetings pages, exports. 38 tests (Node and Chromium). CI now validates, tests, tags and deploys. Site: <a href="../install/index.html">install</a>, <a href="../built/index.html">what is built</a>, this page.</td></tr>
+<tr><td>v0.1.0</td><td>3 November 2026</td><td>The site: the review of brief v1.0, brief v2.0, the plan, the models snapshot, the sources. No extension.</td></tr>
+</tbody></table></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">meetscribe<span>.chrome-extension</span></div>
+    <p>A Chrome extension that transcribes the Google Meet call you are in, on your own OpenRouter key: no bot, no Google recording, no server of ours. First MVP, loaded unpacked. Content CC BY 4.0; code Apache 2.0.</p>
+    <p class="partnote">This site is static, generated from the markdown beside each page, and has no analytics.</p>
+    <p class="verline">site v0.2.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+  </div>
+  <div>
+    <h4>MeetScribe</h4>
+    <a href="../install/index.html">Install and use</a>
+    <a href="../built/index.html">What is built</a>
+    <a href="../review/index.html">Review of v1.0</a>
+    <a href="../brief/index.html">Brief v2.0</a>
+    <a href="../plan/index.html">Plan</a>
+    <a href="../models/index.html">Models</a>
+  </div>
+  <div>
+    <h4>Record</h4>
+    <a href="../sources/index.html">Sources</a>
+    <a href="../versions/index.html">Release history</a>
+    <a href="../brief/v1/index.html">Brief v1.0, as received</a>
+    <a href="../data/stt-models.json">stt-models.json</a>
+    <a href="https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe">GitHub</a>
+  </div>
+  <div>
+    <h4>Family</h4>
+    <a href="https://voicedebrief.ai">voicedebrief.ai</a>
+    <a href="https://chrome-extensions.sgit.ai">chrome-extensions.sgit.ai</a>
+    <a href="https://fix-the-page.chrome-extension.sgit.ai">Fix the Page</a>
+    <a href="https://sgit.ai">sgit.ai</a>
+  </div>
+</div></footer>
+</body>
+</html>

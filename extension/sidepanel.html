@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-GB">
+<head><meta charset="utf-8"><title>MeetScribe</title><link rel="stylesheet" href="ui.css"></head>
+<body>
+<header class="bar">
+  <span class="brand">meet<span>scribe</span></span><span class="ver" id="ver"></span>
+  <nav><a href="meetings.html" target="_blank">Meetings</a><a href="options.html" target="_blank">Options</a></nav>
+</header>
+<main>
+  <div id="banner"></div>
+
+  <section class="box" id="idle" hidden>
+    <h2>This tab</h2>
+    <div class="row"><span id="tabinfo" class="dim small"></span></div>
+    <label class="row"><input type="checkbox" id="useMic"> <span>Also transcribe my microphone (labelled <b>You</b>) for this meeting</span></label>
+    <div class="warn small" id="micNote" hidden>MeetScribe's microphone is separate from Meet's. Muting yourself in Meet does not mute MeetScribe: use the mute button here or <span class="mono">Alt+Shift+M</span>.</div>
+    <h2 style="margin-top:.8rem">Consent</h2>
+    <p class="small">You are about to transcribe this meeting. Tell the other participants, and stop if anyone objects. Recording or transcribing without consent is unlawful in some places. The audio is sent to OpenRouter and on to a transcription provider MeetScribe does not control.</p>
+    <textarea class="notice" id="notice" rows="3" readonly>I'm using MeetScribe to transcribe this call on my own machine; the audio goes to a transcription service. Say if you'd rather I didn't.</textarea>
+    <div class="row"><button id="copy">Copy notice for Meet's chat</button><span id="copied" class="small ok"></span></div>
+    <label class="row"><input type="checkbox" id="consent"> <span>I have told the participants.</span></label>
+    <div class="row"><button class="primary" id="start" disabled>Start transcribing</button></div>
+  </section>
+
+  <section class="box" id="active" hidden>
+    <div class="row"><span class="pill rec" id="state">REC</span><b id="elapsed" class="mono">00:00:00</b><span class="dim small" id="title"></span></div>
+    <div class="row small"><span style="width:64px">Meeting</span><div class="meter"><i id="lvTab"></i></div></div>
+    <div class="row small" id="micRow"><span style="width:64px">You</span><div class="meter"><i id="lvMic"></i></div><button id="mute">Mute my mic</button></div>
+    <div class="small dim" id="micState"></div>
+    <div class="stats" style="margin:.6rem 0"><div><b id="cDone">0</b>sent</div><div><b id="cPending">0</b>waiting</div><div><b id="cFailed">0</b>failed</div><div><b id="cCost">$0</b>cost</div></div>
+    <div class="row"><button id="pause">Pause</button><button class="danger" id="stop">Stop</button></div>
+    <p class="small dim">Pause stops capture: nothing is recorded while paused.</p>
+  </section>
+
+  <section class="box" id="after" hidden>
+    <div class="row"><span class="pill" id="afterState"></span><span class="small" id="afterText"></span></div>
+    <div class="row"><a id="openMeeting" target="_blank">Open this meeting</a></div>
+  </section>
+
+  <section class="box" id="live" hidden>
+    <h2>Transcript</h2>
+    <ol class="lines" id="lines"></ol>
+  </section>
+</main>
+<script type="module" src="sidepanel.js"></script>
+</body>
+</html>

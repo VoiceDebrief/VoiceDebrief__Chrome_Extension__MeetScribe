@@ -1,0 +1,191 @@
+# MeetScribe CI, on the pattern of Fix the Page (SGit-AI__Website__Chrome-Extension__Fix-The-Page) and its hub:
+# validate -> test -> tag -> deploy. Actions are pinned to commit SHAs, the tag in the comment, as the newsroom does.
+#
+#   1. validate     the gate (admin/build/validate.mjs): generated site pages current, links and anchors, key-shaped
+#                   strings, house style, one version across version.txt, manifest and package.json, the manifest
+#                   exactly as brief v2.0 section 9 says, and the extension's code rules. Runs on pull requests too.
+#   2. test         node tests/run.mjs: unit tests in Node and the extension in Chromium (fake audio device, a local
+#                   server replaying OpenRouter). An extension that is not tested is not released.
+#   3. tag-release  every push to dev is a release and ends tagged v{release}.{major}.{minor}. The version is owned by
+#                   admin/build/version.txt (bumped once per release) and must also be in the release commit's subject
+#                   ("site vX.Y.Z: ..."). CI checks the two agree and that the bump is the next minor (or a deliberate
+#                   major), tags the release commit (HEAD on a direct push, HEAD's parent when a pull request lands as a
+#                   merge commit), and backfills tags for earlier release commits.
+#   4. deploy       publishes the site (and the extension's source) to GitHub Pages. Never when validation or the
+#                   tests failed, never from a pull request.
+name: deploy-pages
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Node version (the runner's own; 20 or later)
+        run: node -e "const v=+process.versions.node.split('.')[0]; console.log('node', process.version); if (v < 20) process.exit(1)"
+      - name: Validate the site and the extension
+        run: node admin/build/validate.mjs
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Run the tests (unit in Node, the extension in Chromium)
+        run: node tests/run.mjs
+
+  tag-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          fetch-depth: 0
+      - name: Tag this release (and backfill any missing historical tags)
+        run: |
+          set -euo pipefail
+          git fetch --tags --quiet
+          git config user.name  'GitHub Actions'
+          git config user.email 'actions@github.com'
+
+          # Read the history ONCE, into a variable. Piping `git log` straight into an
+          # early-exiting reader (grep -m1, head) makes git log die of SIGPIPE, and under
+          # `pipefail` that exit status propagates out of the command substitution and
+          # kills the job: after the variable has been assigned, which makes it look like
+          # the next line failed. It is a race against the pipe buffer, so it passes on a
+          # short history and starts failing once the log outgrows it. Herestrings below
+          # read from a file: nothing upstream to signal.
+          LOG=$(git log --format='%H;%s')
+
+          # Backfill: every release commit carries its version in the subject
+          # ("site vR.M.N: ..."). Tag any that are missing: idempotent, so this is a no-op
+          # on every run after the first.
+          while IFS=';' read -r h s; do
+            v=$(printf '%s' "$s" | grep -oP '^site v\K[0-9]+\.[0-9]+\.[0-9]+(?=:)' || true)
+            if [ -n "$v" ] && ! git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+              git tag "v$v" "$h"
+              echo "backfilled v$v -> ${h:0:9}"
+            fi
+          done <<< "$LOG"
+
+          # The version of THIS release, from the file that owns it.
+          VER=$(grep -oP '^v\K[0-9]+\.[0-9]+\.[0-9]+' admin/build/version.txt)
+          TAG="v$VER"
+          echo "version.txt says $TAG"
+
+          # The release commit is the one whose SUBJECT carries the version. It is usually
+          # HEAD, but when dev advances by a merge commit: which is how a pull request
+          # lands: HEAD is the merge and the release commit is its parent. So anchor every
+          # check to the newest release commit reachable from HEAD rather than to HEAD itself.
+          NEWEST=$(grep -oP '^[0-9a-f]+;site v\K[0-9]+\.[0-9]+\.[0-9]+(?=:)' <<< "$LOG" | head -1 || true)
+          if [ -z "$NEWEST" ]; then
+            echo "::error::no commit in this history carries a version in its subject (\"site vX.Y.Z: ...\")"
+            exit 1
+          fi
+          if [ "$NEWEST" != "$VER" ]; then
+            echo "::error::version.txt says $TAG but the newest release commit in this history is v$NEWEST: the two disagree"
+            exit 1
+          fi
+          REL=$(grep -m1 -F ";site v$VER:" <<< "$LOG" | cut -d';' -f1 || true)
+          echo "release commit is ${REL:0:9}"
+
+          # The backfill above tags it. If the tag exists on an EARLIER commit than this
+          # one, the version was reused rather than bumped.
+          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::$TAG was not created: version.txt and the release commit disagree"
+            exit 1
+          fi
+          if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" != "$REL" ]; then
+            echo "::error::$TAG already exists on an earlier commit: version.txt was not bumped for this release"
+            exit 1
+          fi
+
+          # Every push to dev is a minor: the new tag must be the next minor after the
+          # previous latest (or a deliberate major/release bump to .0). `|| true` catches
+          # the very first release, where grep -v empties the pipe and would otherwise kill
+          # the job under pipefail.
+          PREV=$(git tag --list 'v*' | grep -v "^$TAG$" | sort -V | tail -1 || true)
+          if [ -n "$PREV" ]; then
+            NEXT_MINOR=$(echo "$PREV" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
+            NEXT_MAJOR=$(echo "$PREV" | awk -F. '{split($1,a,"v"); printf "v%s.%d.0", a[2], $2+1}')
+            if [ "$TAG" != "$NEXT_MINOR" ] && [ "$TAG" != "$NEXT_MAJOR" ]; then
+              echo "::error::latest tag is $PREV; expected $NEXT_MINOR (minor) or $NEXT_MAJOR (major), got $TAG"
+              exit 1
+            fi
+          fi
+
+          # The load-bearing push: THIS release's tag, on the release commit.
+          git push origin "refs/tags/$TAG"
+          echo "tagged ${REL:0:9} as $TAG"
+
+          # Best-effort: the backfilled historical tags. GITHUB_TOKEN cannot push a ref to
+          # a commit whose tree carries a DIFFERENT .github/workflows blob, so releases
+          # predating a workflow change may be rejected. Push what is accepted, report what
+          # is not.
+          MISSED=0
+          for t in $(git tag --list 'v*'); do
+            [ "$t" = "$TAG" ] && continue
+            if git push origin "refs/tags/$t" >/dev/null 2>&1; then
+              echo "backfill ok: $t"
+            else
+              echo "::warning::could not push backfill tag $t (GITHUB_TOKEN workflow-file limit)"
+              MISSED=$((MISSED+1))
+            fi
+          done
+          if [ "$MISSED" -gt 0 ]; then
+            echo "::notice::$MISSED historical tag(s) still need a human push: git push origin --tags"
+          fi
+          true
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate, test, tag-release]
+    if: always() && github.event_name != 'pull_request' && needs.validate.result == 'success' && needs.test.result == 'success' && (needs.tag-release.result == 'success' || needs.tag-release.result == 'skipped')
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Assemble the site
+        run: |
+          mkdir -p /tmp/site
+          rsync -a ./ /tmp/site/ --exclude '.git' --exclude '.github' --exclude 'node_modules' --exclude 'tests/.build' --exclude 'tests/.out'
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b  # v5.0.0
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa  # v3.0.1
+        with:
+          path: /tmp/site
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e  # v4.0.5
