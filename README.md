@@ -2,15 +2,20 @@
 
 A [VoiceDebrief](https://voicedebrief.ai) product: a Chrome extension that transcribes the Google Meet call you are in, and writes the debrief, on your own OpenRouter key: no bot in the call, no Google recording or transcription (so it works on Workspace Business Starter, which has neither), no server of ours.
 
-**Status (3 November 2026): v0.3.0, the first MVP.** `extension/` is the extension, loaded unpacked; the rest is its site (the review of the first brief, brief v2.0, the plan, install and reality pages). Tested in Chromium with fake audio and replayed OpenRouter responses; not yet on a real Meet call.
+Site: **https://meetscribe.chrome-extension.voicedebrief.ai/**
 
-## Run it
+## Try it
 
-1. `chrome://extensions`, Developer mode on, **Load unpacked**, pick `extension/`.
-2. The options page opens: paste an OpenRouter key (one with a credit limit), Test it, and Allow the microphone if you want your own voice transcribed.
-3. On a Meet tab, click the MeetScribe icon: the side panel opens. Consent, Start, Stop. **Meetings** has the history and exports.
+1. Download **[meetscribe-latest.zip](https://meetscribe.chrome-extension.voicedebrief.ai/releases/meetscribe-latest.zip)** and unzip it (a folder called `meetscribe`).
+2. `chrome://extensions`, switch on **Developer mode**, press **Load unpacked**, pick the `meetscribe` folder.
+3. The options page opens: paste an OpenRouter key ([how to get one, with a spending cap](https://voicedebrief.ai/openrouter-key/)) and press **Test the key**.
+4. In a Meet call, click the MeetScribe icon on the Meet tab: consent, **Start transcribing**. After the call: **Stop**, **Meetings**, **Write the debrief**.
 
-[`install/index.md`](install/index.md) has the detail and screenshots; [`built/index.md`](built/index.md) says what exists.
+Then [tell us what happened](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md). An hour of meeting costs roughly 5 to 15 US cents on OpenRouter (3 November 2026 prices); you pay OpenRouter directly, and MeetScribe charges nothing.
+
+**Status (3 November 2026): v0.3.1, beta.** 45 automated tests pass (Node and Chromium, fake audio, replayed OpenRouter responses). The first real Meet calls are being made now. [`built/index.md`](built/index.md) says what exists; [`install/index.md`](install/index.md) has the full guide with screenshots.
+
+## The site's pages
 
 | Page | What |
 |---|---|
@@ -29,6 +34,7 @@ A [VoiceDebrief](https://voicedebrief.ai) product: a Chrome extension that trans
 ## Structure
 
 ```
+releases/                  meetscribe-vX.Y.Z.zip and meetscribe-latest.zip, each with .sha256: extension/ byte for byte
 extension/                 the extension: manifest.json, service-worker.js, offscreen.*, worklet.js, sidepanel.*, options.*, meetings.*, ui.css, build.js, icons/
 extension/lib/             wav, vad (cuts at pauses), openrouter, queue (leases, retries), transcript (lines, gaps, flags, exports), debrief + prompts (VoiceDebrief's prompt and locales), theme, db (IndexedDB), settings
 tests/                     unit.test.mjs (Node), extension.test.mjs (Chromium), helpers/ (replay server, synthetic audio), fixtures/openrouter/, run.mjs
@@ -65,7 +71,7 @@ That is: stamp `extension/build.js` (version, commit, time); regenerate the site
 ## Release
 
 1. Bump `admin/build/version.txt` once; set `extension/manifest.json` and `package.json` to match.
-2. `node admin/build/package.mjs` (stamps `extension/build.js`), `node admin/build/build.mjs`, `npm test`, `node admin/build/validate.mjs`.
+2. `node admin/build/package.mjs` (stamps `extension/build.js` and builds the release zip), `node admin/build/build.mjs`, `npm test`, `node admin/build/validate.mjs`.
 3. Add a row to `versions/index.md`.
 4. Commit with the subject `site vX.Y.Z: what changed` and push to `dev`.
 
@@ -83,6 +89,6 @@ node admin/build/snapshot-models.mjs    # refresh data/stt-models.json from Open
 
 ## What needs a human
 
-Choosing the domain (brief v2.0, open question 1) and adding a `CNAME`; allowing `dev` in the `github-pages` environment if it is restricted; trying it on a real Meet call.
+Trying it on a real Meet call. The domain is done: Route 53 CNAME `meetscribe.chrome-extension` to `voicedebrief.github.io`, the custom domain set in Settings, Pages, with HTTPS enforced. The `CNAME` file in this repository names it and the build reads it from there.
 
 Content CC BY 4.0; code Apache 2.0 (see [LICENSE](LICENSE)).

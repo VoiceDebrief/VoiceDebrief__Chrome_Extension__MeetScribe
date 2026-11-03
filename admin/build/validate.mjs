@@ -14,6 +14,8 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const fails = [];
@@ -42,7 +44,9 @@ for (const md of files.filter(f => f.endsWith('index.md'))) {
 // 3
 const anchors = new Map();
 const idsOf = (html) => { if (!anchors.has(html)) anchors.set(html, new Set([...readFileSync(html, 'utf8').matchAll(/ id="([^"]+)"/g)].map(m => m[1]))); return anchors.get(html); };
+const SITE = 'https://' + readFileSync(join(ROOT, 'CNAME'), 'utf8').trim();
 const checkLink = (from, href) => {
+  if (href.startsWith(SITE + '/')) { from = join(ROOT, 'index.html'); href = href.slice(SITE.length + 1) || 'index.html'; }   // our own absolute URLs must resolve here too
   if (/^([a-z]+:|\/\/)/i.test(href) || href.startsWith('mailto:')) return;
   const [path, frag] = href.split('#');
   const target = path ? resolve(dirname(from), decodeURI(path)) : from;
@@ -101,6 +105,35 @@ for (const f of files.filter(f => rel(f).startsWith('extension/') && /\.(js|html
   if (/\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write/.test(code)) fail(`${r}: HTML built from strings (render with textContent)`);
   if (/<script[^>]+src=["'](https?:)?\/\//i.test(s) || /import\s[^;]*from\s*['"]https?:/.test(code) || /import\(\s*['"]https?:/.test(code)) fail(`${r}: remote code`);
   if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(s) && r.endsWith('.html')) fail(`${r}: inline script (the CSP forbids it)`);
+}
+
+// 11. one domain: the CNAME file; README and llms.txt name it, the manifest's homepage is it, no page links the old address
+if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(SITE.slice(8))) fail(`CNAME: "${SITE.slice(8)}" is not a hostname`);
+for (const f of ['README.md', 'llms.txt']) if (!readFileSync(join(ROOT, f), 'utf8').includes(SITE)) fail(`${f} does not name the site ${SITE}`);
+if (manifest.homepage_url !== SITE + '/') fail(`manifest homepage_url should be ${SITE}/`);
+for (const f of files.filter(f => /\.(md|html|txt)$/.test(f) && !rel(f).startsWith('brief/v1/') && !rel(f).startsWith('admin/'))) {
+  if (/voicedebrief\.github\.io\/VoiceDebrief__Chrome_Extension__MeetScribe(?!\/? redirects)/.test(readFileSync(f, 'utf8').replace(/older address voicedebrief\.github\.io\/VoiceDebrief__Chrome_Extension__MeetScribe\/ redirects/g, ''))) fail(`${rel(f)}: links the old github.io address`);
+}
+
+// 12. the download is the source: releases/meetscribe-<version>.zip holds exactly extension/, byte for byte,
+//     meetscribe-latest.zip is the same bytes, and each .sha256 matches
+{
+  const { readZip } = createRequire(import.meta.url)('./zip.cjs');
+  const name = `meetscribe-${version}.zip`, zp = join(ROOT, 'releases', name);
+  if (!existsSync(zp)) fail(`releases/${name} is missing: run node admin/build/package.mjs`);
+  else {
+    const zb = readFileSync(zp);
+    const entries = new Map(readZip(zb).map(e => [e.name, e.data]));
+    const ext = files.filter(f => rel(f).startsWith('extension/')).map(f => [rel(f).replace(/^extension\//, 'meetscribe/'), readFileSync(f)]);
+    for (const [n, d] of ext) if (!entries.has(n)) fail(`releases/${name}: missing ${n}`); else if (!entries.get(n).equals(d)) fail(`releases/${name}: ${n} differs from extension/ (run package.mjs)`);
+    for (const n of entries.keys()) if (!ext.some(([m]) => m === n)) fail(`releases/${name}: carries ${n}, which is not in extension/`);
+    const sha = createHash('sha256').update(zb).digest('hex');
+    for (const z of [name, 'meetscribe-latest.zip']) {
+      const s = join(ROOT, 'releases', z + '.sha256');
+      if (!existsSync(s) || !readFileSync(s, 'utf8').startsWith(sha)) fail(`releases/${z}.sha256 does not match the zip`);
+    }
+    if (!existsSync(join(ROOT, 'releases', 'meetscribe-latest.zip')) || !readFileSync(join(ROOT, 'releases', 'meetscribe-latest.zip')).equals(zb)) fail('releases/meetscribe-latest.zip is not the current release');
+  }
 }
 
 // 10. colour lives in vd-tokens.css only (VoiceDebrief's rule, scripts/check_themes.py there): no hex or rgb()

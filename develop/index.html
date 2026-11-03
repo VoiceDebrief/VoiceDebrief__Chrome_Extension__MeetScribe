@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Build, test and release MeetScribe</title>
 <meta name="description" content="There is no compile step: load extension/ unpacked. How to stamp it, run the tests and the gate, regenerate the site, and release to dev, where CI validates, tests, tags and deploys.">
+<link rel="canonical" href="https://meetscribe.chrome-extension.voicedebrief.ai/develop/index.html">
+<meta property="og:url" content="https://meetscribe.chrome-extension.voicedebrief.ai/develop/index.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="VoiceDebrief MeetScribe">
 <meta property="og:title" content="Build, test and release MeetScribe">
@@ -20,7 +22,7 @@
   <a class="brand" href="../index.html">Voice<em>Debrief</em> <span>MeetScribe</span></a>
   <span class="beta" title="Beta: tested in Chromium, not yet on a real Meet call">BETA</span>
   <a class="parent" href="https://voicedebrief.ai" title="MeetScribe is a VoiceDebrief product">&#8599; part of <b>voicedebrief.ai</b></a>
-  <a class="ver" href="../versions/index.html" title="Release history">v0.3.0</a>
+  <a class="ver" href="../versions/index.html" title="Release history">v0.3.1</a>
   <a class="nl" href="../install/index.html">Install</a>
   <a class="nl here" href="../develop/index.html">Build</a>
   <a class="nl" href="../built/index.html">Built</a>
@@ -57,18 +59,19 @@
 <li>Pin <strong>VoiceDebrief MeetScribe</strong> to the toolbar. The options page opens the first time: set your OpenRouter key there. <a href="../install/index.html">Install and use</a> has the rest.</li>
 </ol>
 <p>After a <code>git pull</code>, press the reload arrow on MeetScribe's card in <code>chrome://extensions</code>; Chrome does not notice file changes by itself. The bottom of the options page shows the version, commit and build time of what is loaded.</p>
-<h2 id="3-stamp-the-build-optional-for-local-use">3. Stamp the build (optional for local use)</h2>
+<h2 id="3-stamp-the-build-and-make-the-zip-for-a-release">3. Stamp the build and make the zip (for a release)</h2>
 <pre data-lang="bash"><code>node admin/build/package.mjs</code></pre>
-<p>This writes <code>extension/build.js</code> with the version from <code>admin/build/version.txt</code>, the current commit and the time, which the options page shows. The copy in the repository is stamped at each release, so a fresh clone already says which release it is. Stamping changes a tracked file: commit it only when releasing (<code>git checkout extension/build.js</code> drops it).</p>
+<p>This writes <code>extension/build.js</code> with the version from <code>admin/build/version.txt</code>, the current commit and the time, which the options page shows. It then zips <code>extension/</code> into <code>releases/meetscribe-vX.Y.Z.zip</code> and <code>releases/meetscribe-latest.zip</code> (one folder, <code>meetscribe/</code>, inside), each with its <code>.sha256</code>: the download testers use. The gate checks that the zip holds exactly <code>extension/</code>, byte for byte. The copy in the repository is stamped at each release, so a fresh clone already says which release it is. Stamping changes tracked files: commit them only when releasing (<code>git checkout extension/build.js releases/</code> drops them).</p>
 <h2 id="4-run-the-tests">4. Run the tests</h2>
 <p>Once, to install Playwright and its Chromium:</p>
 <pre data-lang="bash"><code>npm install --no-save --no-package-lock playwright@1.63.0</code></pre>
 <pre data-lang="bash"><code>npx playwright install chromium</code></pre>
 <p>Then, every time:</p>
 <pre data-lang="bash"><code>node tests/run.mjs</code></pre>
-<p>It builds a TEST copy of the extension in <code>tests/.build/extension-test/</code> and runs every <code>tests/*.test.mjs</code>. The TEST copy is marked in its name, and its CSP also allows <code>127.0.0.1</code>. The runner fails if a test fails, and also if a file ran no tests at all. There are two files:</p>
+<p>It builds a TEST copy of the extension in <code>tests/.build/extension-test/</code> and runs every <code>tests/*.test.mjs</code>. The TEST copy is marked in its name, and its CSP also allows <code>127.0.0.1</code>. The runner fails if a test fails, and also if a file ran no tests at all. There are three files:</p>
 <ul>
 <li><code>unit.test.mjs</code> runs in Node, against the modules in <code>extension/lib/</code>: WAV writing and checking, cutting at pauses on audio with a known shape, OpenRouter responses and errors, the transcript, the debrief prompt.</li>
+<li><code>release.test.mjs</code> unzips <code>releases/meetscribe-latest.zip</code>, loads it into Chromium the way a tester does, and checks that it is the release build at the current version.</li>
 <li><code>extension.test.mjs</code> runs in Chromium:<ul>
 <li>The TEST extension is loaded unpacked, and Chromium's fake audio device plays a known WAV, standing in for the tab and the microphone.</li>
 <li>A local server (<code>tests/helpers/replay.mjs</code>) plays OpenRouter and records every request it would have billed.</li>
@@ -134,7 +137,7 @@
     <div class="brandline">Voice<em>Debrief</em> <span>MeetScribe</span></div>
     <p>The VoiceDebrief transcript and debrief, for the Google Meet call you are in: a Chrome extension on your own OpenRouter key, with no bot in the call, no Google recording and no server of ours. Beta. Content CC BY 4.0; code Apache 2.0.</p>
     <p class="partnote">Your audio and its transcript are sent to OpenRouter, which passes them to a model provider. We do not know which provider handles your recording, and we have no control over what they do with it. This site is static and has no analytics.</p>
-    <p class="verline">site v0.3.0 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
+    <p class="verline">site v0.3.1 · <a href="index.md">this page as markdown</a> · <a href="../llms.txt">llms.txt</a></p>
   </div>
   <div>
     <h4>MeetScribe</h4>

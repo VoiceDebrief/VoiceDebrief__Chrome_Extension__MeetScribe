@@ -1,15 +1,31 @@
-# Install and use MeetScribe v0.3.0
+# Install and use MeetScribe v0.3.1
 
-The first MVP, loaded unpacked from a clone of the repository. No Chrome Web Store, no zip, no compile step: Chrome runs the files in `extension/` as they are in the repository. [Build, test and release](../develop/index.md) has the developer's side.
+MeetScribe is not in the Chrome Web Store yet. You load it yourself, which takes about two minutes, from a zip or from a clone of the repository. Both hold exactly the same files. [Build, test and release](../develop/index.md) has the developer's side.
 
-## Install
+## Install from the zip (most people)
 
-1. Clone the repository (default branch `dev`): `git clone https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe`
-2. Open `chrome://extensions` and turn on **Developer mode**.
-3. **Load unpacked**, and pick the `extension/` folder.
-4. Pin MeetScribe to the toolbar. The options page opens by itself the first time.
+1. Download [meetscribe-latest.zip](../releases/meetscribe-latest.zip) and unzip it. You get a folder called `meetscribe`; keep it somewhere it will stay, because Chrome loads it from there.
+2. Open `chrome://extensions` (type it into the address bar) and switch on **Developer mode**, top right.
+3. Press **Load unpacked** and pick the `meetscribe` folder.
+4. Pin **VoiceDebrief MeetScribe** to the toolbar (the puzzle-piece icon, then the pin). The options page opens by itself the first time.
 
-After a `git pull`, press the reload arrow on MeetScribe's card in `chrome://extensions`. The options page shows the version, commit and build time, so you can check which build is running.
+To update, download the new zip, replace the folder's contents, and press the reload arrow on MeetScribe's card in `chrome://extensions`. Your meetings and settings are kept.
+
+Every release is kept as `releases/meetscribe-vX.Y.Z.zip`, with a `.sha256` beside it. The zip holds exactly the repository's `extension/` folder, byte for byte: the release gate checks it. To check the file you downloaded:
+
+```bash
+shasum -a 256 meetscribe-latest.zip
+```
+
+and compare with [meetscribe-latest.zip.sha256](../releases/meetscribe-latest.zip.sha256).
+
+## Install from a clone (developers)
+
+```bash
+git clone https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe.git
+```
+
+Then **Load unpacked** and pick the repository's `extension/` folder. After a `git pull`, press the reload arrow on MeetScribe's card. The options page shows the version, commit and build time, so you can check which build is running.
 
 ## Set up (once)
 
@@ -62,14 +78,14 @@ Each spike question from [the plan](../plan/index.md) can be answered with this 
 | S7 | Is the mic captured while muted in Meet? | Mute in Meet only and speak: a **You** line appears (expected: yes) |
 | S8 | Does the meeting stay on your headset? | Pick it in options; listen when you press Start |
 
-## Testing it tomorrow: a short script
+## A first test: a short script
 
-1. Pull `dev`, reload the extension, and check the options page's footer shows **0.3.0**.
+1. Install or update, and check the options page's footer shows **0.3.1**.
 2. Make or reuse a capped OpenRouter key; **Test the key**.
 3. A two-person Meet call, headphones on, microphone **on**. Talk for five minutes, with one stretch muted in Meet only (S7).
 4. Stop. On the meeting page, check that every second is a line, a gap with a reason, or silence. Play two segments with ▶. Count the forced cuts (S5).
 5. **Write the debrief**; check every point against the line its time names.
 6. Again on laptop speakers, to count the `probable-echo` lines (S3).
-7. Export Markdown and JSON, and keep them with your notes for the spike page.
+7. Export Markdown and JSON, and [report the test](https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe/issues/new?template=test-report.md): the form asks the eight spike questions.
 
 The developer's side (stamping, tests, the gate, release) is on [Build, test and release](../develop/index.md).

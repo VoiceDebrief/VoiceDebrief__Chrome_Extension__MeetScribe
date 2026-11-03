@@ -46,7 +46,7 @@ before(async () => {
   context = await chromium.launchPersistentContext(profile, {
     channel: 'chromium',
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream',
-           `--use-file-for-fake-audio-capture=${fakeWav}`, '--autoplay-policy=no-user-gesture-required'],
+           `--use-file-for-fake-audio-capture=${fakeWav}`],
   });
   [sw] = context.serviceWorkers();
   if (!sw) sw = await context.waitForEvent('serviceworker');

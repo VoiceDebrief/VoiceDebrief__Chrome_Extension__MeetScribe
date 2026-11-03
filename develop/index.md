@@ -31,13 +31,13 @@ cd VoiceDebrief__Chrome_Extension__MeetScribe
 
 After a `git pull`, press the reload arrow on MeetScribe's card in `chrome://extensions`; Chrome does not notice file changes by itself. The bottom of the options page shows the version, commit and build time of what is loaded.
 
-## 3. Stamp the build (optional for local use)
+## 3. Stamp the build and make the zip (for a release)
 
 ```bash
 node admin/build/package.mjs
 ```
 
-This writes `extension/build.js` with the version from `admin/build/version.txt`, the current commit and the time, which the options page shows. The copy in the repository is stamped at each release, so a fresh clone already says which release it is. Stamping changes a tracked file: commit it only when releasing (`git checkout extension/build.js` drops it).
+This writes `extension/build.js` with the version from `admin/build/version.txt`, the current commit and the time, which the options page shows. It then zips `extension/` into `releases/meetscribe-vX.Y.Z.zip` and `releases/meetscribe-latest.zip` (one folder, `meetscribe/`, inside), each with its `.sha256`: the download testers use. The gate checks that the zip holds exactly `extension/`, byte for byte. The copy in the repository is stamped at each release, so a fresh clone already says which release it is. Stamping changes tracked files: commit them only when releasing (`git checkout extension/build.js releases/` drops them).
 
 ## 4. Run the tests
 
@@ -57,9 +57,10 @@ Then, every time:
 node tests/run.mjs
 ```
 
-It builds a TEST copy of the extension in `tests/.build/extension-test/` and runs every `tests/*.test.mjs`. The TEST copy is marked in its name, and its CSP also allows `127.0.0.1`. The runner fails if a test fails, and also if a file ran no tests at all. There are two files:
+It builds a TEST copy of the extension in `tests/.build/extension-test/` and runs every `tests/*.test.mjs`. The TEST copy is marked in its name, and its CSP also allows `127.0.0.1`. The runner fails if a test fails, and also if a file ran no tests at all. There are three files:
 
 - `unit.test.mjs` runs in Node, against the modules in `extension/lib/`: WAV writing and checking, cutting at pauses on audio with a known shape, OpenRouter responses and errors, the transcript, the debrief prompt.
+- `release.test.mjs` unzips `releases/meetscribe-latest.zip`, loads it into Chromium the way a tester does, and checks that it is the release build at the current version.
 - `extension.test.mjs` runs in Chromium:
   - The TEST extension is loaded unpacked, and Chromium's fake audio device plays a known WAV, standing in for the tab and the microphone.
   - A local server (`tests/helpers/replay.mjs`) plays OpenRouter and records every request it would have billed.

@@ -1,6 +1,7 @@
 // Builds the site: every page's index.md is the source, and index.html beside it is generated from it.
 // No dependencies, no network. Also regenerates the generated regions inside markdown (the model table).
 // The page list below is the single list of pages: validate.mjs fails on an index.md that is not in it.
+// The domain comes from the CNAME file: canonical links, og:url, sitemap.xml and robots.txt are built from it.
 //   node admin/build/build.mjs           write
 //   node admin/build/build.mjs --check   exit 1 if any generated file is out of date (used by validate.mjs)
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -11,6 +12,8 @@ const ROOT    = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CHECK   = process.argv.includes('--check');
 const VERSION = readFileSync(join(ROOT, 'admin/build/version.txt'), 'utf8').trim();
 const REPO    = 'https://github.com/VoiceDebrief/VoiceDebrief__Chrome_Extension__MeetScribe';
+const SITE    = 'https://' + readFileSync(join(ROOT, 'CNAME'), 'utf8').trim();   // the CNAME file owns the domain
+const pageUrl = (p) => `${SITE}/${p.path ? p.path + '/' : ''}index.html`;
 
 const PAGES = [
   { path: '',          nav: 'Home',      title: 'MeetScribe: transcribe the Meet call you are in, on your own key',
@@ -118,7 +121,10 @@ function render(md) {
     }
     const buf = [];
     while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i])) buf.push(lines[i++]);
-    out.push(`<p>${buf.map(inline).join('\n')}</p>`);
+    const para = buf.map(inline).join('\n');
+    // a paragraph that is only a "Download ..." link is the page's button
+    if (/^<a href="[^"]+">Download [^<]*<\/a>$/.test(para)) { out.push(`<p class="ctas" style="justify-content:flex-start">${para.replace('<a ', '<a class="cta1" ')}</p>`); continue; }
+    out.push(`<p>${para}</p>`);
   }
   return out.join('\n');
 }
@@ -169,6 +175,8 @@ function frame(page, body) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(page.title)}</title>
 <meta name="description" content="${esc(page.description)}">
+<link rel="canonical" href="${pageUrl(page)}">
+<meta property="og:url" content="${pageUrl(page)}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="VoiceDebrief MeetScribe">
 <meta property="og:title" content="${esc(page.title)}">
@@ -248,6 +256,10 @@ for (const page of PAGES) {
   put(mdRel, md);
   put(join(page.path, 'index.html'), frame(page, render(md)));
 }
+
+put('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  PAGES.map(p => `  <url><loc>${pageUrl(p)}</loc></url>`).join('\n') + `\n</urlset>\n`);
+put('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`);
 
 if (CHECK) {
   if (stale.length) { console.error(`out of date, run node admin/build/build.mjs:\n  ${stale.join('\n  ')}`); process.exit(1); }

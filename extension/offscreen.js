@@ -75,6 +75,9 @@ async function begin({ streamId, meetingId, mic, micDeviceId, outputDeviceId }) 
 
   // 2. a 16 kHz context for the PCM taps (Chrome resamples the stream into it)
   try { S.capture = new AudioContext({ sampleRate: SAMPLE_RATE }); } catch { S.capture = new AudioContext(); }
+  // a suspended context would mean silence for the user and no audio captured: resume both, and say so if one will not run
+  await Promise.all([S.playback.resume(), S.capture.resume()].map(p => p.catch(() => {})));
+  if (S.playback.state !== 'running' || S.capture.state !== 'running') throw new Error(`audio would not start (playback ${S.playback.state}, capture ${S.capture.state})`);
   await S.capture.audioWorklet.addModule('worklet.js');
   S.channels.tab = channel('tab', tab, 0);
   tab.getAudioTracks()[0]?.addEventListener('ended', () => toSw({ type: 'tab-ended' }));
